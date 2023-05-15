@@ -142,8 +142,7 @@ public class OrderService {
             response -> Mono.error(new NotFoundException("Product not found.")))
         .onStatus(status -> status.value() != HttpStatus.OK.value(),
             response -> Mono.error(new GenericException("Error on request to product-back server.")))
-        .bodyToMono(ProductDTO.class)
-        .subscribeOn(Schedulers.boundedElastic());
+        .bodyToMono(ProductDTO.class);
     }
 
 
@@ -162,7 +161,7 @@ public class OrderService {
         .switchIfEmpty(Mono.error(new NotFoundException("Order not found.")))
         .filter(e -> e.getStatus() == EnumStatusOrder.CREATED)
         .switchIfEmpty(Mono.error(new PreconditionFailedException("Order status is not CREATED.")))
-        .doOnNext(e -> updateProductQuantity(e))
+        .doOnNext(e -> updateProductQuantity(e).subscribe())
         .flatMap(e ->{
             e.setStatus(EnumStatusOrder.CANCELED);
             return repository.save(e);
@@ -173,26 +172,27 @@ public class OrderService {
         .switchIfEmpty(Mono.error(new NotFoundException("Order not found.")))
         .filter(e -> e.getStatus() == EnumStatusOrder.CREATED)
         .switchIfEmpty(Mono.error(new PreconditionFailedException("Order status is not CREATED.")))
-        .doOnNext(e -> updateProductQuantity(e))
+        .doOnNext(e -> updateProductQuantity(e).subscribe())
         .flatMap(e -> {
             e.setStatus(EnumStatusOrder.REFUSED);
             return repository.save(e);
         });
     }
 
-    private void updateProductQuantity(Order order){
-        Flux.range(0, 1)
+    private Mono<Item> updateProductQuantity(Order order){
+        return Flux.fromIterable(order.getItems())
         .parallel()
         .runOn(Schedulers.boundedElastic())
-        .doOnNext(e -> updateOnProductMicroservice(order))
-        .sequential();
+        .flatMap(e -> updateOnProductMicroservice(order)) //TODO: Changing doOnNext to flatMap fixed the request problem
+        .sequential()
+        .next();
     }
 
-    private void updateOnProductMicroservice(Order order){
-        Flux<Item> responseRequest = webClient.build()
+    private Flux<Item> updateOnProductMicroservice(Order order){
+        return webClient.build()
         .put()
         .uri(productBackAddress+"/product/products")
-        .body(Flux.fromIterable(order.getItems()), Item.class)
+        .bodyValue(order.getItems())
         .retrieve()
         .onStatus(status -> status.value() == HttpStatus.SERVICE_UNAVAILABLE.value(),
             response -> Mono.error(new APIConnectionError("Connection to product-back has failed.")))
@@ -200,10 +200,7 @@ public class OrderService {
             response -> Mono.error(new NotFoundException("Product not found.")))
         .onStatus(status -> status.value() != HttpStatus.OK.value(),
             response -> Mono.error(new GenericException("Error on request to product-back server.")))
-        .bodyToFlux(Item.class)
-        .subscribeOn(Schedulers.boundedElastic());
-    
-        responseRequest.subscribe();
+        .bodyToFlux(Item.class);
     }
 
     /* NOTA SOBRE WEBCLIENT X RESTTEMPLATE */
