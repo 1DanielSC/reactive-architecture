@@ -17,6 +17,7 @@ import com.reactive.reviewback.repository.ReviewRepository;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 @Service
 public class ProductReviewService {
@@ -49,20 +50,8 @@ public class ProductReviewService {
         Mono<ProductReview> productReview = findByName(review.getProductName());
         return productReview
         .switchIfEmpty(Mono.defer(() -> {
-
-            Mono<ProductDTO> productRequest =  webClient.build()
-            .get()
-            .uri(productBackAddress+"/product/name/{name}", review.getProductName())
-            .retrieve()
-            .onStatus(status -> status.value() == HttpStatus.SERVICE_UNAVAILABLE.value(),
-                response -> Mono.error(new APIConnectionError("Connection to product-back has failed.")))
-            .onStatus(status -> status.value() == HttpStatus.NOT_FOUND.value(),
-                response -> Mono.error(new NotFoundException("Product not found.")))
-            .onStatus(status -> status.value() != HttpStatus.OK.value(),
-                response -> Mono.error(new GenericException("Error on request to product-back server.")))
-            .bodyToMono(ProductDTO.class);
-
-            return productRequest.switchIfEmpty(Mono.error(new GenericException("No product.")))
+            return findProduct(review)
+            .switchIfEmpty(Mono.error(new GenericException("No product.")))
             .flatMap(e -> {
                 ProductReview newProductReview = new ProductReview();
                 newProductReview.setProductName(review.getProductName());
@@ -75,6 +64,32 @@ public class ProductReviewService {
             return productReviewUpdated;
         })
         .flatMap(repository::save);
+    }
+
+
+    private Mono<ProductDTO> findProduct(Review review){
+        return Flux.range(0, 1)
+        .parallel()
+        .runOn(Schedulers.boundedElastic())
+        .flatMap(e -> requestOnMicroservice(review))
+        .sequential()
+        .next();
+    }
+
+    private Mono<ProductDTO> requestOnMicroservice(Review review){
+        Mono<ProductDTO> productRequest =  webClient.build()
+        .get()
+        .uri(productBackAddress+"/product/name/{name}", review.getProductName())
+        .retrieve()
+        .onStatus(status -> status.value() == HttpStatus.SERVICE_UNAVAILABLE.value(),
+            response -> Mono.error(new APIConnectionError("Connection to product-back has failed.")))
+        .onStatus(status -> status.value() == HttpStatus.NOT_FOUND.value(),
+            response -> Mono.error(new NotFoundException("Product not found.")))
+        .onStatus(status -> status.value() != HttpStatus.OK.value(),
+            response -> Mono.error(new GenericException("Error on request to product-back server.")))
+        .bodyToMono(ProductDTO.class);
+        productRequest.subscribe();
+        return productRequest;
     }
 
 }
