@@ -21,6 +21,7 @@ import com.reactive.salesback.repository.OrderRepository;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 @Service
 public class OrderService {
@@ -73,34 +74,8 @@ public class OrderService {
 
         return repository.findById(orderId)
         .switchIfEmpty(Mono.error(new NotFoundException("Order not found with this id.")))
-        .flatMap(orderMono -> {
-
-            Mono<ProductDTO> responseProduct =  webClient.build()
-            .put()
-            .uri(productBackAddress+"/product/request")
-            .body(Mono.just(item), Item.class) //Funcionou com o Mono.just(). Antes o product-back nem recebia a requisicao
-            .retrieve()
-            .onStatus(status -> status.value() == HttpStatus.SERVICE_UNAVAILABLE.value(),
-                response -> Mono.error(new APIConnectionError("Connection to product-back has failed.")))
-            .onStatus(status -> status.value() == HttpStatus.NOT_FOUND.value(),
-                response -> Mono.error(new NotFoundException("Product not found.")))
-            .onStatus(status -> status.value() != HttpStatus.OK.value(),
-                response -> Mono.error(new GenericException("Error on request to product-back server.")))
-            .bodyToMono(ProductDTO.class);
-            
-        
-            /*
-            O codigo abaixo estaria criando um novo pipeline/fluxo ?
-
-                responseProduct.flatMap(e ->{
-                    item.setPrice(e.getPrice());
-                    return Mono.just(e);
-                });
-
-
-                Ou o fluxo seria o "Mono<ProductDTO> responseProduct" ?
-             */
-            return responseProduct
+        .flatMap(orderMono -> {            
+            return requestProduct(item)
             .switchIfEmpty(Mono.error(new InvalidDataException("Nao foi possivel obter o product.")))
             .flatMap(product -> {
                 item.setPrice(product.getPrice());                 
@@ -146,6 +121,31 @@ public class OrderService {
         });
     }
 
+    private Mono<ProductDTO> requestProduct(Item item){
+        return Flux.range(0, 1)
+        .parallel()
+        .runOn(Schedulers.boundedElastic())
+        .flatMap(e -> requestProductOnMicroservice(item))
+        .sequential()
+        .next();
+    }
+
+    private Mono<ProductDTO> requestProductOnMicroservice(Item item){
+        return webClient.build()
+        .put()
+        .uri(productBackAddress+"/product/request")
+        .body(Mono.just(item), Item.class) //Funcionou com o Mono.just(). Antes o product-back nem recebia a requisicao
+        .retrieve()
+        .onStatus(status -> status.value() == HttpStatus.SERVICE_UNAVAILABLE.value(),
+             response -> Mono.error(new APIConnectionError("Connection to product-back has failed.")))
+        .onStatus(status -> status.value() == HttpStatus.NOT_FOUND.value(),
+            response -> Mono.error(new NotFoundException("Product not found.")))
+        .onStatus(status -> status.value() != HttpStatus.OK.value(),
+            response -> Mono.error(new GenericException("Error on request to product-back server.")))
+        .bodyToMono(ProductDTO.class)
+        .subscribeOn(Schedulers.boundedElastic());
+    }
+
 
     private Mono<Order> placeOrder(Mono<Order> order){
         return order
@@ -162,53 +162,56 @@ public class OrderService {
         .switchIfEmpty(Mono.error(new NotFoundException("Order not found.")))
         .filter(e -> e.getStatus() == EnumStatusOrder.CREATED)
         .switchIfEmpty(Mono.error(new PreconditionFailedException("Order status is not CREATED.")))
-        .flatMap(e -> {
-
-            Flux<Item> responseRequest = webClient.build()
-            .put()
-            .uri(productBackAddress+"/product/products")
-            .body(Flux.fromIterable(e.getItems()), Item.class)
-            .retrieve()
-            .onStatus(status -> status.value() == HttpStatus.SERVICE_UNAVAILABLE.value(),
-                response -> Mono.error(new APIConnectionError("Connection to product-back has failed.")))
-            .onStatus(status -> status.value() != HttpStatus.OK.value(),
-                response -> Mono.error(new GenericException("Error on request to product-back server.")))
-            .bodyToFlux(Item.class);
-
-            responseRequest.subscribe(); //Eu preciso me subscrever para que a requisição seja executada.
+        .doOnNext(e -> updateProductQuantity(e))
+        .flatMap(e ->{
             e.setStatus(EnumStatusOrder.CANCELED);
             return repository.save(e);
         });
     }
     private Mono<Order> refuseOrder(Mono<Order> order){
-
         return order
         .switchIfEmpty(Mono.error(new NotFoundException("Order not found.")))
         .filter(e -> e.getStatus() == EnumStatusOrder.CREATED)
         .switchIfEmpty(Mono.error(new PreconditionFailedException("Order status is not CREATED.")))
+        .doOnNext(e -> updateProductQuantity(e))
         .flatMap(e -> {
+            e.setStatus(EnumStatusOrder.REFUSED);
+            return repository.save(e);
+        });
+    }
+
+    private void updateProductQuantity(Order order){
+        Flux.range(0, 1)
+        .parallel()
+        .runOn(Schedulers.boundedElastic())
+        .doOnNext(e -> updateOnProductMicroservice(order))
+        .sequential();
+    }
+
+    private void updateOnProductMicroservice(Order order){
+        Flux<Item> responseRequest = webClient.build()
+        .put()
+        .uri(productBackAddress+"/product/products")
+        .body(Flux.fromIterable(order.getItems()), Item.class)
+        .retrieve()
+        .onStatus(status -> status.value() == HttpStatus.SERVICE_UNAVAILABLE.value(),
+            response -> Mono.error(new APIConnectionError("Connection to product-back has failed.")))
+        .onStatus(status -> status.value() == HttpStatus.NOT_FOUND.value(),
+            response -> Mono.error(new NotFoundException("Product not found.")))
+        .onStatus(status -> status.value() != HttpStatus.OK.value(),
+            response -> Mono.error(new GenericException("Error on request to product-back server.")))
+        .bodyToFlux(Item.class)
+        .subscribeOn(Schedulers.boundedElastic());
+    
+        responseRequest.subscribe();
+    }
+
+    /* NOTA SOBRE WEBCLIENT X RESTTEMPLATE */
             
-            Flux<Item> responseRequest = webClient.build()
-            .put()
-            .uri(productBackAddress+"/product/products")
-            .body(Flux.fromIterable(e.getItems()), Item.class)
-            .retrieve()
-            .onStatus(status -> status.value() == HttpStatus.SERVICE_UNAVAILABLE.value(),
-                response -> Mono.error(new APIConnectionError("Connection to product-back has failed.")))
-            .onStatus(status -> status.value() == HttpStatus.NOT_FOUND.value(),
-                response -> Mono.error(new NotFoundException("Product not found.")))
-            .onStatus(status -> status.value() != HttpStatus.OK.value(),
-                response -> Mono.error(new GenericException("Error on request to product-back server.")))
-                .bodyToFlux(Item.class);
 
-            responseRequest.subscribe();
-
-                /* NOTA SOBRE WEBCLIENT X RESTTEMPLATE */
-
-
-            //Se eu tivesse utilizado RestTemplate, quando a linha abaixo for executada
-                //O product já terá sua quantidade atualizada no servidor Product-Back
-                //Isso acontece por causa da abordagem não-bloqueante (sincronismo)
+        //Se eu tivesse utilizado RestTemplate, quando a linha abaixo for executada
+            //O product já terá sua quantidade atualizada no servidor Product-Back
+            //Isso acontece por causa da abordagem não-bloqueante (sincronismo)
             
             /*
              * Se algum dado fosse retornado dessa requisição, o Netty seria avisado que eu fiz meu trabalho
@@ -219,9 +222,5 @@ public class OrderService {
              * 
              *  Dessa forma, não precisamos utilizar o método block() para bloquear a execução e esperar pelo resultado do outro servidor.
              */
-            
-            e.setStatus(EnumStatusOrder.REFUSED);
-            return repository.save(e);
-        });
-    }
+
 }
