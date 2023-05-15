@@ -51,7 +51,7 @@ public class ProductReviewService {
         return productReview
         .switchIfEmpty(Mono.defer(() -> {
             return findProduct(review)
-            .switchIfEmpty(Mono.error(new GenericException("No product.")))
+            .switchIfEmpty(Mono.error(new GenericException("No product found with this name.")))
             .flatMap(e -> {
                 ProductReview newProductReview = new ProductReview();
                 newProductReview.setProductName(review.getProductName());
