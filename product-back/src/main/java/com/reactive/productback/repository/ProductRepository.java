@@ -12,4 +12,6 @@ import reactor.core.publisher.Mono;
 public interface ProductRepository extends ReactiveMongoRepository<Product, String>{
  
     Mono<Product> findByName(String name);
+
+    Mono<Void> deleteAllByName(String name);
 }

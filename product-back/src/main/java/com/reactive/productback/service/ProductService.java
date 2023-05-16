@@ -26,6 +26,10 @@ public class ProductService {
         return repository.findById(id);
     }
 
+    public Mono<Void> deleteAllByName(String name){
+        return repository.deleteAllByName(name);
+    }
+
     public Mono<Product> save(Product entity){
         return findByName(entity.getName())
         .switchIfEmpty(Mono.just(new Product(null, entity.getName(), 0L, entity.getPrice())))

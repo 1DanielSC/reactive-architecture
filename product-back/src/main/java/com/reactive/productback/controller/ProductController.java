@@ -3,6 +3,7 @@ package com.reactive.productback.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -52,5 +53,10 @@ public class ProductController {
     @PutMapping(value = "/products")
     public Flux<Product> increaseQuantity(@RequestBody List<Product> products){
         return service.increaseQuantity(products);
+    }
+
+    @DeleteMapping(value = "/{name}")
+    public Mono<Void> deleteAllByName(@PathVariable String name){
+        return service.deleteAllByName(name);
     }
 }
