@@ -27,7 +27,13 @@ public class ProductService {
     }
 
     public Mono<Product> save(Product entity){
-        return repository.save(entity);
+        return findByName(entity.getName())
+        .switchIfEmpty(Mono.just(new Product(null, entity.getName(), 0L, entity.getPrice())))
+        .flatMap(e -> {
+            e.setQuantity(e.getQuantity()+entity.getQuantity());
+            return Mono.just(e);
+        })
+        .flatMap(repository::save);
     }
 
     public Mono<Product> findByName(String name){
