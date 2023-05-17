@@ -11,13 +11,13 @@ public class ProductReview {
     
     @Id
     private String id;
-    private String productName;
+    private String name;
 
     private List<Review> reviews;
     public Double rating;
 
     public ProductReview(){
-        this.productName="";
+        this.name="";
         this.reviews = new ArrayList<>();
     }
 
@@ -28,10 +28,10 @@ public class ProductReview {
         this.id = id;
     }
     public String getProductName() {
-        return productName;
+        return name;
     }
     public void setProductName(String productName) {
-        this.productName = productName;
+        this.name = productName;
     }
     public List<Review> getReviews() {
         return reviews;

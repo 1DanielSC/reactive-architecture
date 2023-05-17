@@ -10,5 +10,5 @@ import reactor.core.publisher.Mono;
 @Repository
 public interface ProductReviewRepository extends ReactiveMongoRepository<ProductReview, String> {
     
-    Mono<ProductReview> findByProductName(String productName);
+    Mono<ProductReview> findByName(String name);
 }

@@ -38,12 +38,16 @@ public class ProductReviewService {
         return repository.findAll();
     }
 
+    public Mono<Void> deleteAll(){
+        return repository.deleteAll();
+    }
+
     public Mono<ProductReview> findById(String id){
         return repository.findById(id);
     }
 
     public Mono<ProductReview> findByName(String name){
-        return repository.findByProductName(name);
+        return repository.findByName(name);
     }
 
     public Mono<ProductReview> save(Review review){
