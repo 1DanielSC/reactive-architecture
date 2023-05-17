@@ -1,7 +1,6 @@
 package com.reactive.productback.controller;
 
 import java.util.List;
-import java.util.concurrent.Executors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,6 +17,7 @@ import com.reactive.productback.service.ProductService;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 @RestController
 @RequestMapping("product")
@@ -48,7 +48,7 @@ public class ProductController {
 
     @PostMapping
     public Mono<Product> save(@RequestBody Product entity){
-        return service.save(entity);
+        return service.save(entity);//TODO: CHECK HERE .subscribeOn(Schedulers.boundedElastic());
     }
 
     @PutMapping("/request")
