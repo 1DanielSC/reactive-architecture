@@ -1,6 +1,7 @@
 package com.reactive.productback.controller;
 
 import java.util.List;
+import java.util.concurrent.Executors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -24,6 +25,11 @@ public class ProductController {
     
     @Autowired
     private ProductService service;
+
+    @GetMapping("/thread")
+    public Mono<String> thread(){
+        return Mono.just(Thread.currentThread().toString());
+    }
 
     @GetMapping
     public Flux<Product> findAll(){
