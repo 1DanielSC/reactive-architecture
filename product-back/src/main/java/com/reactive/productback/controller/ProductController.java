@@ -28,7 +28,10 @@ public class ProductController {
 
     @GetMapping("/thread")
     public Mono<String> thread(){
-        return Mono.just(Thread.currentThread().toString());
+        return Mono.just(Thread.currentThread().toString())
+        .doOnNext(e -> System.out.println(Thread.currentThread().toString()))
+        .subscribeOn(Schedulers.boundedElastic())
+        .doOnNext(e -> System.out.println(Thread.currentThread().toString()));
     }
 
     @GetMapping
@@ -48,7 +51,7 @@ public class ProductController {
 
     @PostMapping
     public Mono<Product> save(@RequestBody Product entity){
-        return service.save(entity);//TODO: CHECK HERE .subscribeOn(Schedulers.boundedElastic());
+        return service.save(entity);//.subscribeOn(Schedulers.boundedElastic());
     }
 
     @PutMapping("/request")
@@ -64,5 +67,10 @@ public class ProductController {
     @DeleteMapping(value = "/{name}")
     public Mono<Void> deleteAllByName(@PathVariable String name){
         return service.deleteAllByName(name);
+    }
+
+    @DeleteMapping
+    public Mono<Void> deleteAll(){
+        return service.deleteAll();
     }
 }

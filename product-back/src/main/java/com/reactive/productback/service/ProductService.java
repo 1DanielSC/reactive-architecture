@@ -1,6 +1,8 @@
 package com.reactive.productback.service;
 
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,8 @@ public class ProductService {
     @Autowired
     private ProductRepository repository;
 
+    //private ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
+
     public Flux<Product> findAll(){
         return repository.findAll();
     }
@@ -32,28 +36,36 @@ public class ProductService {
     }
 
     public Mono<Product> save(Product entity){
+
         return findByName(entity.getName())
         .switchIfEmpty(Mono.just(new Product(null, entity.getName(), 0L, entity.getPrice())))
-        .doOnNext(e -> {
-            System.out.println(Thread.currentThread().toString());
-        })
+        // .doOnNext(e -> {
+        //     System.out.println(Thread.currentThread().toString());
+        // })
         .flatMap(e -> {
-            System.out.println(Thread.currentThread().toString());
+            // System.out.println(Thread.currentThread().toString());
             e.setQuantity(e.getQuantity()+entity.getQuantity());
             return Mono.just(e);
         })
-        .doOnNext(e -> {
-            System.out.println(Thread.currentThread().toString());
-        })
-        .flatMap(repository::save)
-        .subscribeOn(Schedulers.boundedElastic());
+        // .doOnNext(e -> {
+        //     System.out.println(Thread.currentThread().toString());
+        // })
+        .flatMap(repository::save);
     }
 
     public Mono<Product> findByName(String name){
         //return repository.findByName(name).publishOn(Schedulers.fromExecutorService(Executors.newVirtualThreadPerTaskExecutor()))
-        return repository.findByName(name)
-        .subscribeOn(Schedulers.boundedElastic());
+        //return repository.findByName(name) //TODO: VERIFICAR DEPOIS - Executado com a thread main do eventloop
+        return Mono.defer(() -> repository.findByName(name))
+        //.publishOn(Schedulers.fromExecutorService(executorService));
+        .publishOn(Schedulers.boundedElastic());
+        // .doOnNext(e -> {
+        //     System.out.println("Apos busca no repo: " + Thread.currentThread().toString());
+        // });
+        //.publishOn(Schedulers.boundedElastic()); //Fez com que o restante do metodo save() fosse executado com essa thread
     }
+
+    
 
     public Mono<Product> update(Product entity){        
         Mono<Product> product = repository.findById(entity.getId());
@@ -99,5 +111,9 @@ public class ProductService {
                 return repository.save(product);
             });
         });
+    }
+
+    public Mono<Void> deleteAll(){
+        return repository.deleteAll();
     }
 }

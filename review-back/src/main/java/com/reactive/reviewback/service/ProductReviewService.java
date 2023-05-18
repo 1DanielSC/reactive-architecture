@@ -1,5 +1,8 @@
 package com.reactive.reviewback.service;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -25,6 +28,8 @@ public class ProductReviewService {
     @Autowired
     private ProductReviewRepository repository;
 
+    //private ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
+
     @Autowired
     private ReviewRepository reviewRepository;
 
@@ -47,12 +52,16 @@ public class ProductReviewService {
     }
 
     public Mono<ProductReview> findByName(String name){
-        return repository.findByName(name);
+       // return repository.findByName(name).publishOn(Schedulers.fromExecutor(executorService));
+       return Mono.defer(() -> repository.findByName(name))
+       .publishOn(Schedulers.boundedElastic());
+       //.publishOn(Schedulers.fromExecutorService(executorService));
+        
     }
 
     public Mono<ProductReview> save(Review review){
-        Mono<ProductReview> productReview = findByName(review.getProductName());
-        return productReview
+        return 
+        findByName(review.getProductName())
         .switchIfEmpty(Mono.defer(() -> {
             return findProduct(review)
             .switchIfEmpty(Mono.error(new GenericException("No product found with this name.")))
@@ -61,7 +70,8 @@ public class ProductReviewService {
                 newProductReview.setProductName(review.getProductName());
                 return Mono.just(newProductReview);
             });
-        })).zipWith(reviewRepository.save(review), (productReviewUpdated, reviewSaved) -> {
+        }))
+        .zipWith(reviewRepository.save(review), (productReviewUpdated, reviewSaved) -> {
             productReviewUpdated.addReview(reviewSaved);
             productReviewUpdated.setRating(productReviewUpdated.getReviews().stream()
                 .mapToDouble(Review::getRating).sum() / productReviewUpdated.getReviews().size());
@@ -75,6 +85,7 @@ public class ProductReviewService {
         return Flux.range(0, 1)
         .parallel()
         .runOn(Schedulers.boundedElastic())
+        //.runOn(Schedulers.fromExecutor(executorService))
         .flatMap(e -> requestOnMicroservice(review))
         .sequential()
         .next();
