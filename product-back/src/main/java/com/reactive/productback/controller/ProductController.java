@@ -3,6 +3,7 @@ package com.reactive.productback.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,12 +27,15 @@ public class ProductController {
     @Autowired
     private ProductService service;
 
+    @Value("${oi}")
+    private String check;
+
     @GetMapping("/thread")
     public Mono<String> thread(){
         return Mono.just(Thread.currentThread().toString())
         .doOnNext(e -> System.out.println(Thread.currentThread().toString()))
         .subscribeOn(Schedulers.boundedElastic())
-        .doOnNext(e -> System.out.println(Thread.currentThread().toString()));
+        .doOnNext(e -> System.out.println(check));
     }
 
     @GetMapping
