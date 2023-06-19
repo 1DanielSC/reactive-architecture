@@ -3,7 +3,6 @@ package com.reactive.salesback.service;
 import java.time.LocalDateTime;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -31,9 +30,6 @@ public class OrderService {
 
     @Autowired
     private WebClient.Builder webClient;
-
-    @Value("${product-back.address}")
-    private String productBackAddress;
 
     public Flux<Order> findAll(){
         return repository.findAll();
@@ -133,7 +129,7 @@ public class OrderService {
     private Mono<ProductDTO> requestProductOnMicroservice(Item item){
         return webClient.build()
         .put()
-        .uri(productBackAddress+"/product/request")
+        .uri("/product/request")
         .body(Mono.just(item), Item.class) //Funcionou com o Mono.just(). Antes o product-back nem recebia a requisicao
         .retrieve()
         .onStatus(status -> status.value() == HttpStatus.SERVICE_UNAVAILABLE.value(),
@@ -191,7 +187,7 @@ public class OrderService {
     private Flux<Item> updateOnProductMicroservice(Order order){
         return webClient.build()
         .put()
-        .uri(productBackAddress+"/product/products")
+        .uri("/product/products")
         .bodyValue(order.getItems())
         .retrieve()
         .onStatus(status -> status.value() == HttpStatus.SERVICE_UNAVAILABLE.value(),

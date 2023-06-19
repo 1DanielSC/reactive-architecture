@@ -4,7 +4,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -35,9 +34,6 @@ public class ProductReviewService {
 
     @Autowired
     private WebClient.Builder webClient;
-
-    @Value("${product-back.address}")
-    private String productBackAddress;
 
     public Flux<ProductReview> findAll(){
         return repository.findAll();
@@ -94,7 +90,7 @@ public class ProductReviewService {
     private Mono<ProductDTO> requestOnMicroservice(Review review){
         Mono<ProductDTO> productRequest =  webClient.build()
         .get()
-        .uri(productBackAddress+"/product/name/{name}", review.getProductName())
+        .uri("/product/name/{name}", review.getProductName())
         .retrieve()
         .onStatus(status -> status.value() == HttpStatus.SERVICE_UNAVAILABLE.value(),
             response -> Mono.error(new APIConnectionError("Connection to product-back has failed.")))
