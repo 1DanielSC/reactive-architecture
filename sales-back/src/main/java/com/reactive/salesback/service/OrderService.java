@@ -17,6 +17,7 @@ import com.reactive.salesback.model.Order;
 import com.reactive.salesback.model.dtos.ProductDTO;
 import com.reactive.salesback.model.enums.EnumStatusOrder;
 import com.reactive.salesback.repository.OrderRepository;
+import com.reactive.salesback.service.request.ProductServiceClient;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -30,6 +31,9 @@ public class OrderService {
 
     @Autowired
     private WebClient.Builder webClient;
+
+    @Autowired
+    private ProductServiceClient productClient;
 
     public Flux<Order> findAll(){
         return repository.findAll();
@@ -117,6 +121,7 @@ public class OrderService {
         });
     }
 
+    //TODO: Verificar como lidar com erros de requisição
     private Mono<ProductDTO> requestProduct(Item item){
         return Flux.range(0, 1)
         .parallel()
@@ -127,19 +132,10 @@ public class OrderService {
     }
 
     private Mono<ProductDTO> requestProductOnMicroservice(Item item){
-        return webClient.build()
-        .put()
-        .uri("/product/request")
-        .body(Mono.just(item), Item.class) //Funcionou com o Mono.just(). Antes o product-back nem recebia a requisicao
-        .retrieve()
-        .onStatus(status -> status.value() == HttpStatus.SERVICE_UNAVAILABLE.value(),
-             response -> Mono.error(new APIConnectionError("Connection to product-back has failed.")))
-        .onStatus(status -> status.value() == HttpStatus.NOT_FOUND.value(),
-            response -> Mono.error(new NotFoundException("Product not found.")))
-        .onStatus(status -> status.value() != HttpStatus.OK.value(),
-            response -> Mono.error(new GenericException("Error on request to product-back server.")))
-        .bodyToMono(ProductDTO.class);
+        return productClient.requestProduct(item);
     }
+
+    
 
 
     private Mono<Order> placeOrder(Mono<Order> order){
@@ -176,7 +172,7 @@ public class OrderService {
     }
 
     private Mono<Item> updateProductQuantity(Order order){
-        return Flux.fromIterable(order.getItems())
+        return Flux.range(0, 1)
         .parallel()
         .runOn(Schedulers.boundedElastic())
         .flatMap(e -> updateOnProductMicroservice(order)) //TODO: Changing doOnNext to flatMap fixed the request problem
@@ -185,6 +181,26 @@ public class OrderService {
     }
 
     private Flux<Item> updateOnProductMicroservice(Order order){
+        return productClient.increaseQuantity(order.getItems());
+    }
+
+
+    private Mono<ProductDTO> oldRequestProductOnMicroservice(Item item){
+        return webClient.build()
+        .put()
+        .uri("/product/request")
+        .body(Mono.just(item), Item.class) //Funcionou com o Mono.just(). Antes o product-back nem recebia a requisicao
+        .retrieve()
+        .onStatus(status -> status.value() == HttpStatus.SERVICE_UNAVAILABLE.value(),
+             response -> Mono.error(new APIConnectionError("Connection to product-back has failed.")))
+        .onStatus(status -> status.value() == HttpStatus.NOT_FOUND.value(),
+            response -> Mono.error(new NotFoundException("Product not found.")))
+        .onStatus(status -> status.value() != HttpStatus.OK.value(),
+            response -> Mono.error(new GenericException("Error on request to product-back server.")))
+        .bodyToMono(ProductDTO.class);
+    }
+
+    private Flux<Item> oldUpdateOnProductMicroservice(Order order){
         return webClient.build()
         .put()
         .uri("/product/products")
@@ -198,6 +214,8 @@ public class OrderService {
             response -> Mono.error(new GenericException("Error on request to product-back server.")))
         .bodyToFlux(Item.class);
     }
+
+    
 
     /* NOTA SOBRE WEBCLIENT X RESTTEMPLATE */
             
