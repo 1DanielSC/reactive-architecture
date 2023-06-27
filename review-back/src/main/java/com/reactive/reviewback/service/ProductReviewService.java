@@ -16,6 +16,7 @@ import com.reactive.reviewback.model.Review;
 import com.reactive.reviewback.model.dtos.ProductDTO;
 import com.reactive.reviewback.repository.ProductReviewRepository;
 import com.reactive.reviewback.repository.ReviewRepository;
+import com.reactive.reviewback.service.request.ProductServiceClient;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -34,6 +35,9 @@ public class ProductReviewService {
 
     @Autowired
     private WebClient.Builder webClient;
+
+    @Autowired
+    private ProductServiceClient productClient;
 
     public Flux<ProductReview> findAll(){
         return repository.findAll();
@@ -82,12 +86,16 @@ public class ProductReviewService {
         .parallel()
         .runOn(Schedulers.boundedElastic())
         //.runOn(Schedulers.fromExecutor(executorService))
-        .flatMap(e -> requestOnMicroservice(review))
+        .flatMap(e -> checkProductExistence(review))
         .sequential()
         .next();
     }
 
-    private Mono<ProductDTO> requestOnMicroservice(Review review){
+    private Mono<ProductDTO> checkProductExistence(Review review){
+        return productClient.findByName(review.getProductName());
+    }
+
+    private Mono<ProductDTO> oldRequestOnMicroservice(Review review){
         Mono<ProductDTO> productRequest =  webClient.build()
         .get()
         .uri("/product/name/{name}", review.getProductName())

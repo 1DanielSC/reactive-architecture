@@ -5,6 +5,10 @@ import org.springframework.cloud.client.loadbalancer.reactive.ReactorLoadBalance
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.support.WebClientAdapter;
+import org.springframework.web.service.invoker.HttpServiceProxyFactory;
+
+import com.reactive.reviewback.service.request.ProductServiceClient;
 
 @Configuration
 public class WebClientConfig {
@@ -13,9 +17,19 @@ public class WebClientConfig {
     private ReactorLoadBalancerExchangeFilterFunction lbFunction;
 
     @Bean
-    public WebClient.Builder webClientBuilder(){
+    public WebClient webClientBuilder1(){
         return WebClient.builder()
         .baseUrl("http://REACTIVEPRODUCT")
-        .filter(lbFunction);
+        .filter(lbFunction)
+        .build();
+    }
+
+    @Bean
+    public ProductServiceClient productClient(WebClient webClient){
+        HttpServiceProxyFactory factory = HttpServiceProxyFactory
+            .builder(WebClientAdapter.forClient(webClient))
+            .build();
+
+        return factory.createClient(ProductServiceClient.class);
     }
 }
