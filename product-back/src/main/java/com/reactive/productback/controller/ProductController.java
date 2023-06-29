@@ -20,7 +20,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 @RestController
-@RequestMapping("product")
+@RequestMapping("reactive-product")
 public class ProductController {
     
     @Autowired
