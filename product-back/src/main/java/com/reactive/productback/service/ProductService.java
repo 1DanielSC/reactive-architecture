@@ -4,6 +4,9 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.redisson.api.RMapCacheReactive;
+import org.redisson.api.RedissonReactiveClient;
+import org.redisson.codec.TypedJsonJacksonCodec;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +24,12 @@ public class ProductService {
     @Autowired
     private ProductRepository repository;
 
+    private RMapCacheReactive<String, Product> productCache;
+
+    public ProductService(RedissonReactiveClient client) {
+        this.productCache = client.getMapCache("/product/", new TypedJsonJacksonCodec(String.class, Product.class));
+    }
+
     //private ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
 
     public Flux<Product> findAll(){
@@ -28,10 +37,19 @@ public class ProductService {
     }
 
     public Mono<Product> findById(String id){
-        return repository.findById(id);
+        return productCache.get("product:"+id)
+            .switchIfEmpty(
+                repository.findById(id)
+                .doOnNext(e -> System.out.println("vou salvar no cache..."))
+                .flatMap(c -> productCache.fastPut("product:"+c.getId(), c)
+                                            .thenReturn(c))
+            );
+
+        //return repository.findById(id);
     }
 
     public Mono<Void> deleteAllByName(String name){
+        productCache.delete().subscribe();
         return repository.deleteAllByName(name);
     }
 
@@ -50,35 +68,42 @@ public class ProductService {
         // .doOnNext(e -> {
         //     System.out.println(Thread.currentThread().toString());
         // })
-        .flatMap(repository::save);
+        .flatMap(repository::save)
+        .flatMap(e -> updateOrSaveOnCache(e));
     }
 
     public Mono<Product> findByName(String name){
-        //return repository.findByName(name).publishOn(Schedulers.fromExecutorService(Executors.newVirtualThreadPerTaskExecutor()))
-        //return repository.findByName(name) //TODO: VERIFICAR DEPOIS - Executado com a thread main do eventloop
-        return Mono.defer(() -> repository.findByName(name))
-        //.publishOn(Schedulers.fromExecutorService(executorService));
+        return Mono.defer(() -> findByNameCached(name))
+        .subscribeOn(Schedulers.boundedElastic())
         .publishOn(Schedulers.boundedElastic());
-        // .doOnNext(e -> {
-        //     System.out.println("Apos busca no repo: " + Thread.currentThread().toString());
-        // });
-        //.publishOn(Schedulers.boundedElastic()); //Fez com que o restante do metodo save() fosse executado com essa thread
+
+        // return Mono.defer(() -> repository.findByName(name))
+        // //.publishOn(Schedulers.fromExecutorService(executorService));
+        // .publishOn(Schedulers.boundedElastic());
     }
 
-    
+    public Mono<Product> findByNameCached(String name){
+        return productCache.get("product:"+name)
+        .switchIfEmpty(repository.findByName(name).doOnNext(e -> System.out.println("Vou buscar no banco"))
+        .flatMap(e -> productCache.fastPut("product:"+name, e).thenReturn(e)));
+    }
+
+    /**
+     * Atualiza cache com nova entidade de Product.
+     * Adiciona cria/atualiza dois registros: id e nome
+     */
+    private Mono<Product> updateOrSaveOnCache(Product entity){
+        return productCache.fastPut("product:"+entity.getName(), entity)                  
+        .thenReturn(entity)          
+        .flatMap(e -> productCache.fastPut("product:"+e.getId(), e).thenReturn(e))              
+        .subscribeOn(Schedulers.boundedElastic());
+    }
 
     public Mono<Product> update(Product entity){        
-        Mono<Product> product = repository.findById(entity.getId());
-        return product.switchIfEmpty(Mono.error(new NotFoundException("Product not found.")))
-        .flatMap( e -> {
-            return repository.save(entity);
-            /*
-             * O Problema aqui era que eu estava passando o parâmetro "e" no comando acima (return repository.save(entity))
-             * 
-             * O parametro "e" é apenas o resultado da busca por Id feita pelo repository.
-             */
-        });
-         
+        return repository.findById(entity.getId())
+        .switchIfEmpty(Mono.error(new NotFoundException("Product not found.")))
+        .flatMap(e -> repository.save(entity))
+        .flatMap(e -> updateOrSaveOnCache(e));
     }
 
     public Mono<Product> requestProduct(Product entity){

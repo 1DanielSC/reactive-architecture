@@ -1,16 +1,22 @@
 package com.reactive.productback.model;
 
+import java.io.Serializable;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document
-public class Product {
+public class Product implements Serializable{
 
     @Id
     private String id;
     private String name;
     private Long quantity;
     private Double price;
+
+    public Product(){
+        
+    }
 
     public Product(String id, String name, Long quantity, Double price) {
         this.id = id;
