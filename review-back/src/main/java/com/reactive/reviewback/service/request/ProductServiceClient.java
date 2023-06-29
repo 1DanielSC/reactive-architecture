@@ -11,6 +11,6 @@ import reactor.core.publisher.Mono;
 @HttpExchange
 public interface ProductServiceClient {
     
-    @GetExchange("/product/name/{name}")
+    @GetExchange("/reactive-product/name/{name}")
     Mono<ProductDTO> findByName(@PathVariable String name);
 }

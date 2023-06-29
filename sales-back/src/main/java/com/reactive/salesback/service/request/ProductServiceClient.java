@@ -15,9 +15,9 @@ import reactor.core.publisher.Mono;
 @HttpExchange
 public interface ProductServiceClient {
     
-    @PutExchange("/product/request")
+    @PutExchange("/reactive-product/request")
     Mono<ProductDTO> requestProduct(@RequestBody(required = true) Item item);
 
-    @PutExchange("/product/products")
+    @PutExchange("/reactive-product/products")
     Flux<Item> increaseQuantity(@RequestBody List<Item> items);
 }
