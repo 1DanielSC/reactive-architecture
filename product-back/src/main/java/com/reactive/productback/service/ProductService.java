@@ -49,7 +49,7 @@ public class ProductService {
     }
 
     public Mono<Void> deleteAllByName(String name){
-        productCache.delete().subscribe();
+        productCache.fastRemove("product:"+name).thenReturn(null).subscribe();
         return repository.deleteAllByName(name);
     }
 
@@ -128,6 +128,7 @@ public class ProductService {
     }
 
     public Mono<Void> deleteAll(){
+        productCache.delete().subscribe();
         return repository.deleteAll();
     }
 }
