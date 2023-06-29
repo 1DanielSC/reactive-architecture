@@ -18,7 +18,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping("order")
+@RequestMapping("reactive-order")
 public class OrderController {
     
     @Autowired
