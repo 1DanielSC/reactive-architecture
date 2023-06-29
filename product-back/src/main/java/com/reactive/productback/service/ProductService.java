@@ -40,7 +40,7 @@ public class ProductService {
         return productCache.get("product:"+id)
             .switchIfEmpty(
                 repository.findById(id)
-                .doOnNext(e -> System.out.println("vou salvar no cache..."))
+                .doOnNext(e -> System.out.println("FindById: vou salvar no cache..."))
                 .flatMap(c -> productCache.fastPut("product:"+c.getId(), c)
                                             .thenReturn(c))
             );
@@ -54,20 +54,12 @@ public class ProductService {
     }
 
     public Mono<Product> save(Product entity){
-
         return findByName(entity.getName())
         .switchIfEmpty(Mono.just(new Product(null, entity.getName(), 0L, entity.getPrice())))
-        // .doOnNext(e -> {
-        //     System.out.println(Thread.currentThread().toString());
-        // })
         .flatMap(e -> {
-            // System.out.println(Thread.currentThread().toString());
             e.setQuantity(e.getQuantity()+entity.getQuantity());
             return Mono.just(e);
         })
-        // .doOnNext(e -> {
-        //     System.out.println(Thread.currentThread().toString());
-        // })
         .flatMap(repository::save)
         .flatMap(e -> updateOrSaveOnCache(e));
     }
@@ -76,10 +68,7 @@ public class ProductService {
         return Mono.defer(() -> findByNameCached(name))
         .subscribeOn(Schedulers.boundedElastic())
         .publishOn(Schedulers.boundedElastic());
-
-        // return Mono.defer(() -> repository.findByName(name))
-        // //.publishOn(Schedulers.fromExecutorService(executorService));
-        // .publishOn(Schedulers.boundedElastic());
+        //.publishOn(Schedulers.fromExecutorService(executorService));
     }
 
     public Mono<Product> findByNameCached(String name){
