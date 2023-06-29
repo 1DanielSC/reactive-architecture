@@ -3,6 +3,9 @@ package com.reactive.reviewback.service;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.redisson.api.RMapCacheReactive;
+import org.redisson.api.RedissonReactiveClient;
+import org.redisson.codec.TypedJsonJacksonCodec;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -39,25 +42,49 @@ public class ProductReviewService {
     @Autowired
     private ProductServiceClient productClient;
 
+    private RMapCacheReactive<String, ProductReview> productReviewCache;
+
+    private RMapCacheReactive<String, Review> reviewCache;
+
+    public ProductReviewService(RedissonReactiveClient client) {
+        this.productReviewCache = client.getMapCache("/product-review/", new TypedJsonJacksonCodec(String.class, ProductReview.class));
+        this.reviewCache = client.getMapCache("/review/", new TypedJsonJacksonCodec(String.class, ProductReview.class));
+    }
+
     public Flux<ProductReview> findAll(){
         return repository.findAll();
     }
 
     public Mono<Void> deleteAll(){
+        reviewCache.delete().subscribe();
         return repository.deleteAll();
     }
 
     public Mono<ProductReview> findById(String id){
-        return repository.findById(id);
+
+        return productReviewCache.get("review:"+id)
+            .switchIfEmpty(
+                repository.findById(id)
+                .doOnNext(e -> System.out.println("FindById: vou salvar no cache..."))
+                .flatMap(c -> productReviewCache.fastPut("review:"+c.getId(), c)
+                                            .thenReturn(c))
+            );
+
+        //return repository.findById(id);
     }
 
     public Mono<ProductReview> findByName(String name){
-       // return repository.findByName(name).publishOn(Schedulers.fromExecutor(executorService));
-       return Mono.defer(() -> repository.findByName(name))
+        return Mono.defer(() -> findByNameCached(name))
        .publishOn(Schedulers.boundedElastic());
        //.publishOn(Schedulers.fromExecutorService(executorService));
-        
     }
+
+    public Mono<ProductReview> findByNameCached(String name){
+        return productReviewCache.get("review:"+name)
+        .switchIfEmpty(repository.findByName(name).doOnNext(e -> System.out.println("Vou buscar no banco..."))
+        .flatMap(e -> productReviewCache.fastPut("review:"+name, e).thenReturn(e)));
+    }
+
 
     public Mono<ProductReview> save(Review review){
         return 
@@ -72,12 +99,28 @@ public class ProductReviewService {
             });
         }))
         .zipWith(reviewRepository.save(review), (productReviewUpdated, reviewSaved) -> {
+            updateOrSaveOnCache(reviewSaved).subscribe();
             productReviewUpdated.addReview(reviewSaved);
             productReviewUpdated.setRating(productReviewUpdated.getReviews().stream()
                 .mapToDouble(Review::getRating).sum() / productReviewUpdated.getReviews().size());
             return productReviewUpdated;
         })
-        .flatMap(repository::save);
+        .flatMap(repository::save)
+        .flatMap(this::updateOrSaveOnCache);
+    }
+
+    private Mono<ProductReview> updateOrSaveOnCache(ProductReview entity){
+        return productReviewCache.fastPut("product-review:"+entity.getProductName(), entity)                  
+        .thenReturn(entity)          
+        .flatMap(e -> productReviewCache.fastPut("product-review:"+e.getId(), e).thenReturn(e))              
+        .subscribeOn(Schedulers.boundedElastic());
+    }
+
+    private Mono<Review> updateOrSaveOnCache(Review entity){
+        return reviewCache.fastPut("review:"+entity.getProductName(), entity)                  
+        .thenReturn(entity)          
+        .flatMap(e -> reviewCache.fastPut("review:"+e.getId(), e).thenReturn(e))              
+        .subscribeOn(Schedulers.boundedElastic());
     }
 
 
