@@ -122,7 +122,7 @@ public class ProductService {
             return productMono.switchIfEmpty(Mono.error(new NotFoundException("Product with name \"" + e.getName() +"\" not found.")))
             .flatMap(product -> {
                 product.setQuantity(e.getQuantity()+product.getQuantity());
-                return repository.save(product);
+                return update(product);
             });
         });
     }
