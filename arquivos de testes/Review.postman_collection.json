@@ -1,0 +1,129 @@
+{
+	"info": {
+		"_postman_id": "8a3a4500-57fb-4c25-a4e6-92eac1787762",
+		"name": "Review",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Save",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"productName\":\"TV\",\r\n    \"review\":\"Very good!\",\r\n    \"rating\":10.0\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8054/product-review",
+					"host": [
+						"localhost"
+					],
+					"port": "8054",
+					"path": [
+						"product-review"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Find All",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8090/product-review",
+					"host": [
+						"localhost"
+					],
+					"port": "8090",
+					"path": [
+						"product-review"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Find By Id",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8054/product-review/1",
+					"host": [
+						"localhost"
+					],
+					"port": "8054",
+					"path": [
+						"product-review",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Health",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8054/actuator/health",
+					"host": [
+						"localhost"
+					],
+					"port": "8054",
+					"path": [
+						"actuator",
+						"health"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Actuator",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8054/actuator",
+					"host": [
+						"localhost"
+					],
+					"port": "8054",
+					"path": [
+						"actuator"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Thread",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8054/product-review/thread",
+					"host": [
+						"localhost"
+					],
+					"port": "8054",
+					"path": [
+						"product-review",
+						"thread"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

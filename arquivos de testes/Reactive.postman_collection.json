@@ -1,0 +1,516 @@
+{
+	"info": {
+		"_postman_id": "48e11c4e-dc67-4faa-8b7d-8b344f2be20e",
+		"name": "Reactive",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Product",
+			"item": [
+				{
+					"name": "Find all",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8090/reactive-product",
+							"host": [
+								"localhost"
+							],
+							"port": "8090",
+							"path": [
+								"reactive-product"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Save",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n\t\"name\":\"TV\",\r\n\t\"price\":312.99,\r\n\t\"quantity\":2\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8090/reactive-product",
+							"host": [
+								"localhost"
+							],
+							"port": "8090",
+							"path": [
+								"reactive-product"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Request Product",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n\t\"name\": \"TV\",\r\n\t\"quantity\": 1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8090/reactive-product/request",
+							"host": [
+								"localhost"
+							],
+							"port": "8090",
+							"path": [
+								"reactive-product",
+								"request"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Increase Quantity",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "[\r\n\t{\r\n\t\t\"name\":\"TV\",\r\n\t\t\"quantity\": 100\r\n\t}\r\n]\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8090/reactive-product/products",
+							"host": [
+								"localhost"
+							],
+							"port": "8090",
+							"path": [
+								"reactive-product",
+								"products"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find by Id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:9000/reactive-product/649e23ea234cdc3972845630",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"reactive-product",
+								"649e23ea234cdc3972845630"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete all By Name",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "localhost:8090/reactive-product/TV",
+							"host": [
+								"localhost"
+							],
+							"port": "8090",
+							"path": [
+								"reactive-product",
+								"TV"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete all",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "localhost:9000/reactive-product",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"reactive-product"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Thread",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:9000/product/thread",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"product",
+								"thread"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Actuator",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:9000/actuator",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"actuator"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Actuator Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:9000/actuator/health",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"actuator",
+								"health"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Review",
+			"item": [
+				{
+					"name": "Save Review",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n\t\"productName\":\"TV\",\r\n\t\"review\": \"Good.\",\r\n\t\"rating\": 10.0\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:9001/reactive-product-review",
+							"host": [
+								"localhost"
+							],
+							"port": "9001",
+							"path": [
+								"reactive-product-review"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find By Id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8090/reactive-product-review/649e1311924f4d2a6e5530b9",
+							"host": [
+								"localhost"
+							],
+							"port": "8090",
+							"path": [
+								"reactive-product-review",
+								"649e1311924f4d2a6e5530b9"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find All",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8090/reactive-product-review",
+							"host": [
+								"localhost"
+							],
+							"port": "8090",
+							"path": [
+								"reactive-product-review"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find All Review",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:9001/review",
+							"host": [
+								"localhost"
+							],
+							"port": "9001",
+							"path": [
+								"review"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete All",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "localhost:8090/reactive-product-review",
+							"host": [
+								"localhost"
+							],
+							"port": "8090",
+							"path": [
+								"reactive-product-review"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Actuator",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:9001/actuator",
+							"host": [
+								"localhost"
+							],
+							"port": "9001",
+							"path": [
+								"actuator"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Actuator Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:9001/actuator/health",
+							"host": [
+								"localhost"
+							],
+							"port": "9001",
+							"path": [
+								"actuator",
+								"health"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Order",
+			"item": [
+				{
+					"name": "Update Status",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "localhost:8090/reactive-order/649b158d5f928840b0b9b204/status/CANCELED",
+							"host": [
+								"localhost"
+							],
+							"port": "8090",
+							"path": [
+								"reactive-order",
+								"649b158d5f928840b0b9b204",
+								"status",
+								"CANCELED"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find All",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8090/reactive-order",
+							"host": [
+								"localhost"
+							],
+							"port": "8090",
+							"path": [
+								"reactive-order"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find by Id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8090/reactive-order/{id}",
+							"host": [
+								"localhost"
+							],
+							"port": "8090",
+							"path": [
+								"reactive-order",
+								"{id}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Order",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "localhost:8090/reactive-order",
+							"host": [
+								"localhost"
+							],
+							"port": "8090",
+							"path": [
+								"reactive-order"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add Item to Order",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"TV\",\r\n    \"quantity\": 1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8090/reactive-order/649b158d5f928840b0b9b204/item",
+							"host": [
+								"localhost"
+							],
+							"port": "8090",
+							"path": [
+								"reactive-order",
+								"649b158d5f928840b0b9b204",
+								"item"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Actuator",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:9002/actuator",
+							"host": [
+								"localhost"
+							],
+							"port": "9002",
+							"path": [
+								"actuator"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Actuator Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:9002/actuator/health",
+							"host": [
+								"localhost"
+							],
+							"port": "9002",
+							"path": [
+								"actuator",
+								"health"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
