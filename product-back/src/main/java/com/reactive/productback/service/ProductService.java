@@ -26,21 +26,21 @@ public class ProductService {
     @Autowired
     private ProductRepository repository;
 
-    private RMapCacheReactive<String, Product> productCache;
+    // private RMapCacheReactive<String, Product> productCache;
 
-    // private RLocalCachedMapReactive<String, Product> productCache;
+    private RLocalCachedMapReactive<String, Product> productCache;
 
     public ProductService(RedissonReactiveClient client) {
-        this.productCache = client.getMapCache("/product/", 
-        new TypedJsonJacksonCodec(String.class, Product.class));
+        // this.productCache = client.getMapCache("/product/", 
+        // new TypedJsonJacksonCodec(String.class, Product.class));
 
-        // LocalCachedMapOptions<String, Product> mapOptions = LocalCachedMapOptions.<String, Product>defaults()
-		// 		.syncStrategy(LocalCachedMapOptions.SyncStrategy.UPDATE)
-		// 		.reconnectionStrategy(LocalCachedMapOptions.ReconnectionStrategy.CLEAR);
+        LocalCachedMapOptions<String, Product> mapOptions = LocalCachedMapOptions.<String, Product>defaults()
+				.syncStrategy(LocalCachedMapOptions.SyncStrategy.UPDATE)
+				.reconnectionStrategy(LocalCachedMapOptions.ReconnectionStrategy.CLEAR);
 
-        // this.productCache = client.getLocalCachedMap("/product/", 
-        //         new TypedJsonJacksonCodec(String.class, Product.class),
-		// 		mapOptions);
+        this.productCache = client.getLocalCachedMap("/product/", 
+                new TypedJsonJacksonCodec(String.class, Product.class),
+				mapOptions);
     }
 
     
@@ -60,7 +60,8 @@ public class ProductService {
                                             .thenReturn(c))
             );
 
-        //return repository.findById(id);
+        // return repository.findById(id)
+        // .switchIfEmpty(Mono.error(new NotFoundException("Product not found with this id.")));
     }
 
     public Mono<Void> deleteAllByName(String name){
