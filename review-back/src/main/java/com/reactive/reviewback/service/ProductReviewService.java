@@ -3,6 +3,8 @@ package com.reactive.reviewback.service;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.redisson.api.LocalCachedMapOptions;
+import org.redisson.api.RLocalCachedMapReactive;
 import org.redisson.api.RMapCacheReactive;
 import org.redisson.api.RedissonReactiveClient;
 import org.redisson.codec.TypedJsonJacksonCodec;
@@ -43,12 +45,31 @@ public class ProductReviewService {
     private ProductServiceClient productClient;
 
     private RMapCacheReactive<String, ProductReview> productReviewCache;
-
     private RMapCacheReactive<String, Review> reviewCache;
+
+    // private RLocalCachedMapReactive<String, ProductReview> productReviewCache;
+    // private RLocalCachedMapReactive<String, Review> reviewCache;
 
     public ProductReviewService(RedissonReactiveClient client) {
         this.productReviewCache = client.getMapCache("/product-review/", new TypedJsonJacksonCodec(String.class, ProductReview.class));
         this.reviewCache = client.getMapCache("/review/", new TypedJsonJacksonCodec(String.class, ProductReview.class));
+        
+        // LocalCachedMapOptions<String, ProductReview> mapOptionsPR = LocalCachedMapOptions.<String, ProductReview>defaults()
+		// 		.syncStrategy(LocalCachedMapOptions.SyncStrategy.UPDATE)
+		// 		.reconnectionStrategy(LocalCachedMapOptions.ReconnectionStrategy.CLEAR);
+
+        // LocalCachedMapOptions<String, Review> mapOptionsR = LocalCachedMapOptions.<String, Review>defaults()
+		// 		.syncStrategy(LocalCachedMapOptions.SyncStrategy.UPDATE)
+		// 		.reconnectionStrategy(LocalCachedMapOptions.ReconnectionStrategy.CLEAR);
+
+        // this.productReviewCache = client.getLocalCachedMap("/product-review/", 
+        // new TypedJsonJacksonCodec(String.class, ProductReview.class),
+        // mapOptionsPR);
+
+        // this.reviewCache = client.getLocalCachedMap("/review/", 
+        // new TypedJsonJacksonCodec(String.class, Review.class),
+        // mapOptionsR);
+
     }
 
     public Flux<ProductReview> findAll(){
@@ -56,6 +77,7 @@ public class ProductReviewService {
     }
 
     public Mono<Void> deleteAll(){
+        productReviewCache.delete().subscribe();
         reviewCache.delete().subscribe();
         return repository.deleteAll();
     }
