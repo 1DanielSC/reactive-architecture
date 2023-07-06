@@ -17,7 +17,6 @@ import com.reactive.salesback.model.Order;
 import com.reactive.salesback.model.dtos.ProductDTO;
 import com.reactive.salesback.model.enums.EnumStatusOrder;
 import com.reactive.salesback.repository.OrderRepository;
-import com.reactive.salesback.service.request.ProductServiceClient;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -33,7 +32,7 @@ public class OrderService {
     private WebClient.Builder webClient;
 
     @Autowired
-    private ProductServiceClient productClient;
+    private ProductServiceResilience productClient;
 
     public Flux<Order> findAll(){
         return repository.findAll();
