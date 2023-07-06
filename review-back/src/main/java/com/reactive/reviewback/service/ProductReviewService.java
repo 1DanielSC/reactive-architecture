@@ -23,7 +23,6 @@ import com.reactive.reviewback.model.Review;
 import com.reactive.reviewback.model.dtos.ProductDTO;
 import com.reactive.reviewback.repository.ProductReviewRepository;
 import com.reactive.reviewback.repository.ReviewRepository;
-import com.reactive.reviewback.service.request.ProductServiceClient;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -44,7 +43,7 @@ public class ProductReviewService {
     private WebClient.Builder webClient;
 
     @Autowired
-    private ProductServiceClient productClient;
+    private ProductServiceResilience productClient;
 
     private RBlockingDequeReactive<String> msgQueue;
 
