@@ -22,10 +22,10 @@ public class ProductServiceResilience {
     @Autowired
     private ProductServiceClient productClient;
 
-    @CircuitBreaker(name = "productservice", fallbackMethod = "circuitFallBack")
-    @RateLimiter(name = "rate_productservice", fallbackMethod = "rateFallBack")
-    @Bulkhead(name = "bulk_productservice", fallbackMethod = "bulkheadFallBack")
-    @Retry(name = "retry_productservice", fallbackMethod = "retryFallBack")
+    @CircuitBreaker(name = "productservice")//, fallbackMethod = "circuitFallBack")
+    @RateLimiter(name = "rate_productservice")//, fallbackMethod = "rateFallBack")
+    @Bulkhead(name = "bulk_productservice")//, fallbackMethod = "bulkheadFallBack")
+    @Retry(name = "retry_productservice")//, fallbackMethod = "retryFallBack")
     public Mono<ProductDTO> requestProduct(Item item){
         return productClient.requestProduct(item);
     }
@@ -50,10 +50,10 @@ public class ProductServiceResilience {
         return Mono.empty();
     }
 
-    @CircuitBreaker(name = "productservice", fallbackMethod = "circuitFallBack")
-    @RateLimiter(name = "rate_productservice", fallbackMethod = "rateFallBack")
-    @Bulkhead(name = "bulk_productservice", fallbackMethod = "bulkheadFallBack")
-    @Retry(name = "retry_productservice", fallbackMethod = "retryFallBack")
+    @CircuitBreaker(name = "productservice")//, fallbackMethod = "circuitFallBack")
+    @RateLimiter(name = "rate_productservice")//, fallbackMethod = "rateFallBack")
+    @Bulkhead(name = "bulk_productservice")//, fallbackMethod = "bulkheadFallBack")
+    @Retry(name = "retry_productservice")//, fallbackMethod = "retryFallBack")
     public Flux<Item> increaseQuantity(List<Item> items){
         return productClient.increaseQuantity(items);
     }

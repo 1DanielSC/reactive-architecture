@@ -18,10 +18,10 @@ public class ProductServiceResilience {
     @Autowired
     private ProductServiceClient productClient;
 
-    @CircuitBreaker(name = "productservice", fallbackMethod = "circuitFallBack")
-    @RateLimiter(name = "rate_productservice", fallbackMethod = "rateFallBack")
-    @Bulkhead(name = "bulk_productservice", fallbackMethod = "bulkheadFallBack")
-    @Retry(name = "retry_productservice", fallbackMethod = "retryFallBack")
+    @CircuitBreaker(name = "productservice")//, fallbackMethod = "circuitFallBack")
+    @RateLimiter(name = "rate_productservice")//, fallbackMethod = "rateFallBack")
+    @Bulkhead(name = "bulk_productservice")//, fallbackMethod = "bulkheadFallBack")
+    @Retry(name = "retry_productservice")//, fallbackMethod = "retryFallBack")
     public Mono<ProductDTO> findByName(String name){
         return productClient.findByName(name);
     }
