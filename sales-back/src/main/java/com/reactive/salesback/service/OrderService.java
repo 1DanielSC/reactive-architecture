@@ -90,31 +90,7 @@ public class OrderService {
                 itemFromStream.setQuantity(itemFromStream.getQuantity()+item.getQuantity());
                 Double priceItem = item.getPrice()*item.getQuantity();
                 orderMono.setTotalPrice(orderMono.getTotalPrice()+priceItem);
-                return repository.save(orderMono); 
-                
-                /* 
-                return Flux.fromIterable(orderMono.getItems())
-                .filter(productItem -> productItem.getName().equals(item.getName()))
-                // O Flux deferido dentro do switchIfEmpty retorna um Mono para que o fluxo possa continuar em flatMap. (switchIfEmpty + flatMap)
-                .switchIfEmpty(Flux.defer(() -> {
-                    System.out.println("Entrei no switch.");
-                    Item t = new Item();
-                    t.setName(item.getName());
-                    t.setPrice(item.getPrice());
-                    t.setQuantity(0);
-                    orderMono.getItems().add(item);
-                    return Flux.from(Mono.just(t));
-                }))
-                .flatMap(listItem -> {
-                    System.out.println("Entrei no flatmap.");
-                    listItem.setQuantity(listItem.getQuantity()+item.getQuantity());
-                    Double priceItem = item.getPrice()*item.getQuantity();
-                    orderMono.setTotalPrice(orderMono.getTotalPrice()+priceItem);
-                    return repository.save(orderMono);   
-                })
-                .next();
-                */
- 
+                return repository.save(orderMono);  
             });
 
         });
