@@ -13,23 +13,23 @@ import com.reactive.salesback.service.request.ProductServiceClient;
 @Configuration
 public class WebClientConfig {
     
-    @Autowired
-    private ReactorLoadBalancerExchangeFilterFunction lbFunction;
+    //@Autowired
+    //private ReactorLoadBalancerExchangeFilterFunction lbFunction;
 
     @Bean
     public WebClient webClientBuilder1(){
         return WebClient.builder()
         .baseUrl("http://REACTIVEPRODUCT")
-        .filter(lbFunction)
+        //.filter(lbFunction)
         .build();
     }
 
-    @Bean
-    public ProductServiceClient productClient(WebClient webClient){
-        HttpServiceProxyFactory factory = HttpServiceProxyFactory
-            .builder(WebClientAdapter.forClient(webClient))
-            .build();
+    // @Bean
+    // public ProductServiceClient productClient(WebClient webClient){
+    //     HttpServiceProxyFactory factory = HttpServiceProxyFactory
+    //         .builder(WebClientAdapter.forClient(webClient))
+    //         .build();
 
-        return factory.createClient(ProductServiceClient.class);
-    }
+    //     return factory.createClient(ProductServiceClient.class);
+    // }
 }

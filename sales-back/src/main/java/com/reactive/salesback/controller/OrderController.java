@@ -21,31 +21,31 @@ import reactor.core.publisher.Mono;
 @RequestMapping("reactive-order")
 public class OrderController {
     
-    @Autowired
-    private OrderService service;
+    // @Autowired
+    // private OrderService service;
 
-    @GetMapping
-    public Flux<Order> findAll(){
-        return service.findAll();
-    }
+    // @GetMapping
+    // public Flux<Order> findAll(){
+    //     return service.findAll();
+    // }
 
-    @GetMapping("/{id}")
-    public Mono<Order> findById(@PathVariable String id){
-        return service.findById(id);
-    }
+    // @GetMapping("/{id}")
+    // public Mono<Order> findById(@PathVariable String id){
+    //     return service.findById(id);
+    // }
 
-    @PostMapping
-    public Mono<Order> createOrder(){
-        return service.createOrder();
-    }
+    // @PostMapping
+    // public Mono<Order> createOrder(){
+    //     return service.createOrder();
+    // }
 
-    @PatchMapping("/{id}/status/{status}")
-    public Mono<Order> updateStatus(@PathVariable(value = "id") String orderId, @PathVariable(value = "status") EnumStatusOrder status){
-        return service.updateStatus(orderId, status);
-    }
+    // @PatchMapping("/{id}/status/{status}")
+    // public Mono<Order> updateStatus(@PathVariable(value = "id") String orderId, @PathVariable(value = "status") EnumStatusOrder status){
+    //     return service.updateStatus(orderId, status);
+    // }
 
-    @PostMapping("/{id}/item")
-    public Mono<Order> addItemToOrder(@PathVariable(value = "id") String orderId, @RequestBody(required = true) Item item){
-        return service.addItemToOrder(orderId, item);
-    }
+    // @PostMapping("/{id}/item")
+    // public Mono<Order> addItemToOrder(@PathVariable(value = "id") String orderId, @RequestBody(required = true) Item item){
+    //     return service.addItemToOrder(orderId, item);
+    // }
 }
