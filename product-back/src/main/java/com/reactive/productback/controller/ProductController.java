@@ -23,53 +23,53 @@ import reactor.core.scheduler.Schedulers;
 @RequestMapping("reactive-product")
 public class ProductController {
     
-    @Autowired
-    private ProductService service;
+    // @Autowired
+    // private ProductService service;
 
-    @GetMapping("/thread")
-    public Mono<String> thread(){
-        return Mono.just(Thread.currentThread().toString())
-        .doOnNext(e -> System.out.println(Thread.currentThread().toString()))
-        .subscribeOn(Schedulers.boundedElastic());
-    }
+    // @GetMapping("/thread")
+    // public Mono<String> thread(){
+    //     return Mono.just(Thread.currentThread().toString())
+    //     .doOnNext(e -> System.out.println(Thread.currentThread().toString()))
+    //     .subscribeOn(Schedulers.boundedElastic());
+    // }
 
-    @GetMapping
-    public Flux<Product> findAll(){
-        return service.findAll();
-    }
+    // @GetMapping
+    // public Flux<Product> findAll(){
+    //     return service.findAll();
+    // }
 
-    @GetMapping("/{id}")
-    public Mono<Product> findById(@PathVariable String id){
-        return service.findById(id);
-    }
+    // @GetMapping("/{id}")
+    // public Mono<Product> findById(@PathVariable String id){
+    //     return service.findById(id);
+    // }
 
-    @GetMapping("/name/{name}")
-    public Mono<Product> findByName(@PathVariable String name){
-        return service.findByName(name);
-    }
+    // @GetMapping("/name/{name}")
+    // public Mono<Product> findByName(@PathVariable String name){
+    //     return service.findByName(name);
+    // }
 
-    @PostMapping
-    public Mono<Product> save(@RequestBody Product entity){
-        return service.save(entity);//.subscribeOn(Schedulers.boundedElastic());
-    }
+    // @PostMapping
+    // public Mono<Product> save(@RequestBody Product entity){
+    //     return service.save(entity);//.subscribeOn(Schedulers.boundedElastic());
+    // }
 
-    @PutMapping("/request")
-    public Mono<Product> requestProduct(@RequestBody(required = true) Product entity){
-        return service.requestProduct(entity);
-    }
+    // @PutMapping("/request")
+    // public Mono<Product> requestProduct(@RequestBody(required = true) Product entity){
+    //     return service.requestProduct(entity);
+    // }
 
-    @PutMapping(value = "/products")
-    public Flux<Product> increaseQuantity(@RequestBody List<Product> products){
-        return service.increaseQuantity(products);
-    }
+    // @PutMapping(value = "/products")
+    // public Flux<Product> increaseQuantity(@RequestBody List<Product> products){
+    //     return service.increaseQuantity(products);
+    // }
 
-    @DeleteMapping(value = "/{name}")
-    public Mono<Void> deleteAllByName(@PathVariable String name){
-        return service.deleteAllByName(name);
-    }
+    // @DeleteMapping(value = "/{name}")
+    // public Mono<Void> deleteAllByName(@PathVariable String name){
+    //     return service.deleteAllByName(name);
+    // }
 
-    @DeleteMapping
-    public Mono<Void> deleteAll(){
-        return service.deleteAll();
-    }
+    // @DeleteMapping
+    // public Mono<Void> deleteAll(){
+    //     return service.deleteAll();
+    // }
 }

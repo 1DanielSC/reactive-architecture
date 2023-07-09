@@ -1,16 +1,12 @@
 package com.reactive.productback.service;
 
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
-import org.redisson.api.LocalCachedMapOptions;
-import org.redisson.api.RLocalCachedMapReactive;
-import org.redisson.api.RMapCacheReactive;
-import org.redisson.api.RedissonReactiveClient;
-import org.redisson.codec.TypedJsonJacksonCodec;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 import com.reactive.productback.exception.NotFoundException;
 import com.reactive.productback.model.Product;
@@ -18,133 +14,193 @@ import com.reactive.productback.repository.ProductRepository;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
-@Service
+
+@Configuration
 public class ProductService {
     
     @Autowired
     private ProductRepository repository;
 
-    // private RMapCacheReactive<String, Product> productCache;
-
-    private RLocalCachedMapReactive<String, Product> productCache;
-
-    public ProductService(RedissonReactiveClient client) {
-        // this.productCache = client.getMapCache("/product/", 
-        // new TypedJsonJacksonCodec(String.class, Product.class));
-
-        LocalCachedMapOptions<String, Product> mapOptions = LocalCachedMapOptions.<String, Product>defaults()
-				.syncStrategy(LocalCachedMapOptions.SyncStrategy.UPDATE)
-				.reconnectionStrategy(LocalCachedMapOptions.ReconnectionStrategy.CLEAR);
-
-        this.productCache = client.getLocalCachedMap("/product/", 
-                new TypedJsonJacksonCodec(String.class, Product.class),
-				mapOptions);
+    @Bean
+    public Supplier<Flux<Product>> findAll(){
+        return () -> repository.findAll();
     }
 
-    
-
-    //private ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
-
-    public Flux<Product> findAll(){
-        return repository.findAll();
-    }
-
-    public Mono<Product> findById(String id){
-        return productCache.get("product:"+id)
+    @Bean
+    public Function<Product, Mono<Product>> save(){
+        return product -> {
+            return repository.findByName(product.getName())
             .switchIfEmpty(
-                repository.findById(id)
-                .doOnNext(e -> System.out.println("FindById: vou salvar no cache..."))
-                .flatMap(c -> productCache.fastPut("product:"+c.getId(), c)
-                                            .thenReturn(c))
-            );
-
-        // return repository.findById(id)
-        // .switchIfEmpty(Mono.error(new NotFoundException("Product not found with this id.")));
+                Mono.just(new Product(null, product.getName(), 0L, product.getPrice()))
+            )
+            .flatMap(e -> {
+                e.setQuantity(e.getQuantity()+product.getQuantity());
+                return Mono.just(e);
+            })
+            .flatMap(repository::save);
+        };
     }
 
-    public Mono<Void> deleteAllByName(String name){
-        productCache.fastRemove("product:"+name).thenReturn(null).subscribe();
-        return repository.deleteAllByName(name);
+    @Bean
+    public Function<String, Mono<Product>> findByName(){
+        return name -> repository.findByName(name);
     }
 
-    public Mono<Product> save(Product entity){
-        return findByName(entity.getName())
-        .switchIfEmpty(Mono.just(new Product(null, entity.getName(), 0L, entity.getPrice())))
-        .flatMap(e -> {
-            e.setQuantity(e.getQuantity()+entity.getQuantity());
-            return Mono.just(e);
-        })
-        .flatMap(repository::save)
-        .flatMap(e -> updateOrSaveOnCache(e));
-    }
-
-    public Mono<Product> findByName(String name){
-        return Mono.defer(() -> findByNameCached(name))
-        .subscribeOn(Schedulers.boundedElastic())
-        .publishOn(Schedulers.boundedElastic());
-        //.publishOn(Schedulers.fromExecutorService(executorService));
-    }
-
-    public Mono<Product> findByNameCached(String name){
-        return productCache.get("product:"+name)
-        .switchIfEmpty(repository.findByName(name).doOnNext(e -> System.out.println("Vou buscar no banco"))
-        .flatMap(e -> productCache.fastPut("product:"+name, e).thenReturn(e)));
-    }
-
-    /**
-     * Atualiza cache com nova entidade de Product.
-     * Adiciona cria/atualiza dois registros: id e nome
-     */
-    private Mono<Product> updateOrSaveOnCache(Product entity){
-        return productCache.fastPut("product:"+entity.getName(), entity)                  
-        .thenReturn(entity)          
-        .flatMap(e -> productCache.fastPut("product:"+e.getId(), e).thenReturn(e))              
-        .subscribeOn(Schedulers.boundedElastic());
+    @Bean
+    public Function<String, Mono<Product>> findById(){
+        return id -> repository.findById(id);
     }
 
     public Mono<Product> update(Product entity){        
         return repository.findById(entity.getId())
         .switchIfEmpty(Mono.error(new NotFoundException("Product not found.")))
-        .flatMap(e -> repository.save(entity))
-        .flatMap(e -> updateOrSaveOnCache(e));
+        .flatMap(e -> repository.save(entity));
     }
 
-    public Mono<Product> requestProduct(Product entity){
-        Mono<Product> product = repository.findByName(entity.getName());
-        
-        return product.switchIfEmpty(Mono.error(new NotFoundException("Product not found.")))
-        .flatMap(e -> {
-            if(e.getQuantity() >= entity.getQuantity()){
-                long quantityLeft = e.getQuantity() - entity.getQuantity();
-                e.setQuantity(quantityLeft);
-                return update(e).flatMap(updated -> {
-                    entity.setPrice(updated.getPrice());
-                    return Mono.just(entity);
+    @Bean
+    public Function<Product, Mono<Product>> requestProduct(){
+        return productReceived -> {
+
+            return 
+            repository.findByName(productReceived.getName())
+            .switchIfEmpty(
+                Mono.error(new NotFoundException("Product with the informed name was not found."))
+            )
+            .flatMap(entity -> {
+                if(entity.getQuantity() >= productReceived.getQuantity()){
+                long quantityLeft = entity.getQuantity() - productReceived.getQuantity();
+                entity.setQuantity(quantityLeft);
+                return update(entity)
+                .flatMap(updated -> {
+                    productReceived.setPrice(updated.getPrice());
+                    return Mono.just(productReceived);
                 });
             }
             return Mono.empty();
-        });
-    }
-
-    public Flux<Product> increaseQuantity(List<Product> products){
-        if(products.size() == 0)
-            return Flux.empty();
-
-        return Flux.fromIterable(products)
-        .flatMap(e -> {
-            Mono<Product> productMono = repository.findByName(e.getName());
-            return productMono.switchIfEmpty(Mono.error(new NotFoundException("Product with name \"" + e.getName() +"\" not found.")))
-            .flatMap(product -> {
-                product.setQuantity(e.getQuantity()+product.getQuantity());
-                return update(product);
             });
-        });
+        };
     }
 
-    public Mono<Void> deleteAll(){
-        productCache.delete().subscribe();
-        return repository.deleteAll();
+    @Bean
+    public Function<List<Product>, Flux<Product>> increaseQuantity(){
+        return products -> {
+            if(products.size() == 0)
+                return Flux.empty();
+
+            return Flux.fromIterable(products)
+            .flatMap(e -> {
+                Mono<Product> productMono = repository.findByName(e.getName());
+                return productMono.switchIfEmpty(
+                    Mono.error(new NotFoundException("Product with name \"" + e.getName() +"\" not found."))
+                )
+                .flatMap(product -> {
+                    product.setQuantity(e.getQuantity()+product.getQuantity());
+                    return update(product);
+                });
+            });
+        };
     }
+
+
+    // public Flux<Product> findAll(){
+    //     return repository.findAll();
+    // }
+
+    // public Mono<Product> findById(String id){
+    //     return productCache.get("product:"+id)
+    //         .switchIfEmpty(
+    //             repository.findById(id)
+    //             .doOnNext(e -> System.out.println("FindById: vou salvar no cache..."))
+    //             .flatMap(c -> productCache.fastPut("product:"+c.getId(), c)
+    //                                         .thenReturn(c))
+    //         );
+
+    //     // return repository.findById(id)
+    //     // .switchIfEmpty(Mono.error(new NotFoundException("Product not found with this id.")));
+    // }
+
+    // public Mono<Void> deleteAllByName(String name){
+    //     productCache.fastRemove("product:"+name).thenReturn(null).subscribe();
+    //     return repository.deleteAllByName(name);
+    // }
+
+    // public Mono<Product> save(Product entity){
+    //     return findByName(entity.getName())
+    //     .switchIfEmpty(Mono.just(new Product(null, entity.getName(), 0L, entity.getPrice())))
+    //     .flatMap(e -> {
+    //         e.setQuantity(e.getQuantity()+entity.getQuantity());
+    //         return Mono.just(e);
+    //     })
+    //     .flatMap(repository::save)
+    //     .flatMap(e -> updateOrSaveOnCache(e));
+    // }
+
+    // public Mono<Product> findByName(String name){
+    //     return Mono.defer(() -> findByNameCached(name))
+    //     .subscribeOn(Schedulers.boundedElastic())
+    //     .publishOn(Schedulers.boundedElastic());
+    //     //.publishOn(Schedulers.fromExecutorService(executorService));
+    // }
+
+    // public Mono<Product> findByNameCached(String name){
+    //     return productCache.get("product:"+name)
+    //     .switchIfEmpty(repository.findByName(name).doOnNext(e -> System.out.println("Vou buscar no banco"))
+    //     .flatMap(e -> productCache.fastPut("product:"+name, e).thenReturn(e)));
+    // }
+
+    // /**
+    //  * Atualiza cache com nova entidade de Product.
+    //  * Adiciona cria/atualiza dois registros: id e nome
+    //  */
+    // private Mono<Product> updateOrSaveOnCache(Product entity){
+    //     return productCache.fastPut("product:"+entity.getName(), entity)                  
+    //     .thenReturn(entity)          
+    //     .flatMap(e -> productCache.fastPut("product:"+e.getId(), e).thenReturn(e))              
+    //     .subscribeOn(Schedulers.boundedElastic());
+    // }
+
+    // public Mono<Product> update(Product entity){        
+    //     return repository.findById(entity.getId())
+    //     .switchIfEmpty(Mono.error(new NotFoundException("Product not found.")))
+    //     .flatMap(e -> repository.save(entity))
+    //     .flatMap(e -> updateOrSaveOnCache(e));
+    // }
+
+    // public Mono<Product> requestProduct(Product entity){
+    //     Mono<Product> product = repository.findByName(entity.getName());
+        
+    //     return product.switchIfEmpty(Mono.error(new NotFoundException("Product not found.")))
+    //     .flatMap(e -> {
+    //         if(e.getQuantity() >= entity.getQuantity()){
+    //             long quantityLeft = e.getQuantity() - entity.getQuantity();
+    //             e.setQuantity(quantityLeft);
+    //             return update(e).flatMap(updated -> {
+    //                 entity.setPrice(updated.getPrice());
+    //                 return Mono.just(entity);
+    //             });
+    //         }
+    //         return Mono.empty();
+    //     });
+    // }
+
+    // public Flux<Product> increaseQuantity(List<Product> products){
+    //     if(products.size() == 0)
+    //         return Flux.empty();
+
+    //     return Flux.fromIterable(products)
+    //     .flatMap(e -> {
+    //         Mono<Product> productMono = repository.findByName(e.getName());
+    //         return productMono.switchIfEmpty(Mono.error(new NotFoundException("Product with name \"" + e.getName() +"\" not found.")))
+    //         .flatMap(product -> {
+    //             product.setQuantity(e.getQuantity()+product.getQuantity());
+    //             return update(product);
+    //         });
+    //     });
+    // }
+
+    // public Mono<Void> deleteAll(){
+    //     productCache.delete().subscribe();
+    //     return repository.deleteAll();
+    // }
 }
