@@ -79,55 +79,57 @@ public class OrderService {
     }
 
     @Bean
-    public Function<RequestItemDTO, Mono<Order>> addItemToOrder(){
-        return dto -> {
-            if(dto == null)
-                System.out.println("DTO eh null");
-            else{
-                System.out.println("ID: " + dto.getId());
-                System.out.println("Nome: " + dto.getItem().getName());
-                System.out.println("Quantity: " + dto.getItem().getQuantity());
-                System.out.println("Price: " + dto.getItem().getPrice());
-            }
-            
-
+    public Function<Mono<RequestItemDTO>, Mono<Order>> addItemToOrder(){
+        return dtoMono -> {
             return 
-            repository.findById(dto.getId())
-            .switchIfEmpty(
-                Mono.error(new NotFoundException("Order not found with this id."))
-            )
-            .flatMap(order -> {
-                ProductDTO requestBody = new ProductDTO();
-                requestBody.setName(dto.getItem().getName());
-                requestBody.setQuantity(dto.getItem().getQuantity());
-
-                bridge.send("requestProduct-in-0", requestBody, MimeTypeUtils.APPLICATION_JSON);
+            dtoMono.flatMap(dto -> {
                 
-                return requestProduct().apply(requestBody)
+                if(dto == null)
+                    System.out.println("DTO eh null");
+                else{
+                    System.out.println("ID: " + dto.getId());
+                    System.out.println("Nome: " + dto.getItem().getName());
+                    System.out.println("Quantity: " + dto.getItem().getQuantity());
+                    System.out.println("Price: " + dto.getItem().getPrice());
+                }
+                return 
+                repository.findById(dto.getId())
                 .switchIfEmpty(
-                    Mono.error(new InvalidDataException("Nao foi possivel obter o product."))
+                    Mono.error(new NotFoundException("Order not found with this id."))
                 )
-                .flatMap(product -> {
-                    if(product == null)
-                        System.out.println("Product recebido eh null");
-                    else{
-                        System.out.println("Price recebido: " + product.getPrice());
-                    }
-
-                    Item item = dto.getItem();
-                    item.setPrice(product.getPrice());                 
-                    Item itemFromStream = order.getItems()
-                    .stream()
-                    .filter(productItem -> productItem.getName().equals(item.getName()))
-                    .findFirst()
-                    .orElse(new Item(item.getName(),item.getPrice()));
-
-                    if(itemFromStream.getQuantity() == 0)
-                        order.getItems().add(item); //TODO: Bad practice.
-                    itemFromStream.setQuantity(itemFromStream.getQuantity()+item.getQuantity());
-                    Double priceItem = item.getPrice()*item.getQuantity();
-                    order.setTotalPrice(order.getTotalPrice()+priceItem);
-                    return repository.save(order);
+                .flatMap(order -> {
+                    ProductDTO requestBody = new ProductDTO();
+                    requestBody.setName(dto.getItem().getName());
+                    requestBody.setQuantity(dto.getItem().getQuantity());
+    
+                    bridge.send("requestProduct-in-0", requestBody, MimeTypeUtils.APPLICATION_JSON);
+                    
+                    return requestProduct().apply(requestBody)
+                    .switchIfEmpty(
+                        Mono.error(new InvalidDataException("Nao foi possivel obter o product."))
+                    )
+                    .flatMap(product -> {
+                        if(product == null)
+                            System.out.println("Product recebido eh null");
+                        else{
+                            System.out.println("Price recebido: " + product.getPrice());
+                        }
+    
+                        Item item = dto.getItem();
+                        item.setPrice(product.getPrice());                 
+                        Item itemFromStream = order.getItems()
+                        .stream()
+                        .filter(productItem -> productItem.getName().equals(item.getName()))
+                        .findFirst()
+                        .orElse(new Item(item.getName(),item.getPrice()));
+    
+                        if(itemFromStream.getQuantity() == 0)
+                            order.getItems().add(item); //TODO: Bad practice.
+                        itemFromStream.setQuantity(itemFromStream.getQuantity()+item.getQuantity());
+                        Double priceItem = item.getPrice()*item.getQuantity();
+                        order.setTotalPrice(order.getTotalPrice()+priceItem);
+                        return repository.save(order);
+                    });
                 });
             });
         };
