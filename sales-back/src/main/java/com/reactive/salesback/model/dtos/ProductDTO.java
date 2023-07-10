@@ -1,6 +1,8 @@
 package com.reactive.salesback.model.dtos;
 
-public class ProductDTO {
+import java.io.Serializable;
+
+public class ProductDTO implements Serializable {
     public String name;
     public Long quantity;
     public Double price;

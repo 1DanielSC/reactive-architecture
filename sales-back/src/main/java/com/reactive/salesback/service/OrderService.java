@@ -5,17 +5,16 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.util.MimeTypeUtils;
 
-import com.reactive.salesback.exception.APIConnectionError;
-import com.reactive.salesback.exception.GenericException;
 import com.reactive.salesback.exception.InvalidDataException;
 import com.reactive.salesback.exception.NotFoundException;
-import com.reactive.salesback.exception.PreconditionFailedException;
+
 import com.reactive.salesback.model.Item;
 import com.reactive.salesback.model.Order;
 import com.reactive.salesback.model.dtos.ProductDTO;
@@ -31,6 +30,9 @@ public class OrderService {
     
     @Autowired
     private OrderRepository repository;
+
+    @Autowired
+    private StreamBridge bridge;
 
     @Bean
     public Supplier<Mono<Order>> createOrder(){
@@ -65,13 +67,30 @@ public class OrderService {
 
     @Bean
     //asynchronous communication through RabbitMQ/Kafka to Product Service
+    /*
+     * Problema: Esta funcao nao esta enviado msg assincrona ao Product.
+     * "requestProduct().apply(requestBody)" ta retornando o proprio produto aplicado...
+     */
     public Function<ProductDTO, Mono<ProductDTO>> requestProduct(){
-        return product -> Mono.just(product);
+        return product -> {
+            System.out.println("Sales-Service: requestProduct");
+            return Mono.just(product);
+        };
     }
 
     @Bean
     public Function<RequestItemDTO, Mono<Order>> addItemToOrder(){
         return dto -> {
+            if(dto == null)
+                System.out.println("DTO eh null");
+            else{
+                System.out.println("ID: " + dto.getId());
+                System.out.println("Nome: " + dto.getItem().getName());
+                System.out.println("Quantity: " + dto.getItem().getQuantity());
+                System.out.println("Price: " + dto.getItem().getPrice());
+            }
+            
+
             return 
             repository.findById(dto.getId())
             .switchIfEmpty(
@@ -81,12 +100,20 @@ public class OrderService {
                 ProductDTO requestBody = new ProductDTO();
                 requestBody.setName(dto.getItem().getName());
                 requestBody.setQuantity(dto.getItem().getQuantity());
+
+                bridge.send("requestProduct-in-0", requestBody, MimeTypeUtils.APPLICATION_JSON);
                 
                 return requestProduct().apply(requestBody)
                 .switchIfEmpty(
                     Mono.error(new InvalidDataException("Nao foi possivel obter o product."))
                 )
                 .flatMap(product -> {
+                    if(product == null)
+                        System.out.println("Product recebido eh null");
+                    else{
+                        System.out.println("Price recebido: " + product.getPrice());
+                    }
+
                     Item item = dto.getItem();
                     item.setPrice(product.getPrice());                 
                     Item itemFromStream = order.getItems()

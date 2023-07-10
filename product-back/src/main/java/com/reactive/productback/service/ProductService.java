@@ -1,6 +1,5 @@
 package com.reactive.productback.service;
 
-import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -15,7 +14,6 @@ import com.reactive.productback.repository.ProductRepository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-
 @Configuration
 public class ProductService {
     
@@ -28,28 +26,42 @@ public class ProductService {
     }
 
     @Bean
-    public Function<Product, Mono<Product>> save(){
-        return product -> {
-            return repository.findByName(product.getName())
-            .switchIfEmpty(
-                Mono.just(new Product(null, product.getName(), 0L, product.getPrice()))
-            )
-            .flatMap(e -> {
-                e.setQuantity(e.getQuantity()+product.getQuantity());
-                return Mono.just(e);
-            })
-            .flatMap(repository::save);
+    public Function<Mono<Product>, Mono<Product>> save(){
+        return productMono -> {
+            return 
+            productMono.flatMap(product -> {
+
+                return repository.findByName(product.getName())
+                .switchIfEmpty(
+                    Mono.just(new Product(null, product.getName(), 0L, product.getPrice()))
+                )
+                .flatMap(e -> {
+                    e.setQuantity(e.getQuantity()+product.getQuantity());
+                    return Mono.just(e);
+                })
+                .flatMap(repository::save);
+            });
+
         };
     }
 
     @Bean
-    public Function<String, Mono<Product>> findByName(){
-        return name -> repository.findByName(name);
+    public Function<Mono<String>, Mono<Product>> findByName(){
+        return name -> {
+            return name.flatMap(e -> {
+                return repository.findByName(e);
+            });
+        };
     }
 
     @Bean
-    public Function<String, Mono<Product>> findById(){
-        return id -> repository.findById(id);
+    public Function<Mono<String>, Mono<Product>> findById(){
+        return id -> {
+            return id.flatMap(e -> {
+                System.out.println("ID: " + e);
+                return repository.findById(e);
+            });
+        }; 
     }
 
     public Mono<Product> update(Product entity){        
@@ -59,60 +71,91 @@ public class ProductService {
     }
 
     @Bean
-    public Function<Product, Mono<Product>> requestProduct(){
-        return productReceived -> {
+    public Function<Mono<Product>, Mono<Product>> requestProduct(){
+        return productMono -> {
+            return
+            productMono.flatMap(
+                productReceived -> {
 
-            return 
-            repository.findByName(productReceived.getName())
-            .switchIfEmpty(
-                Mono.error(new NotFoundException("Product with the informed name was not found."))
-            )
-            .flatMap(entity -> {
-                if(entity.getQuantity() >= productReceived.getQuantity()){
-                long quantityLeft = entity.getQuantity() - productReceived.getQuantity();
-                entity.setQuantity(quantityLeft);
-                return update(entity)
-                .flatMap(updated -> {
-                    productReceived.setPrice(updated.getPrice());
-                    return Mono.just(productReceived);
-                });
-            }
-            return Mono.empty();
-            });
-        };
-    }
-
-    @Bean
-    public Function<List<Product>, Flux<Product>> increaseQuantity(){
-        return products -> {
-            if(products.size() == 0)
-                return Flux.empty();
-
-            return Flux.fromIterable(products)
-            .flatMap(e -> {
-                Mono<Product> productMono = repository.findByName(e.getName());
-                return productMono.switchIfEmpty(
-                    Mono.error(new NotFoundException("Product with name \"" + e.getName() +"\" not found."))
+                System.out.println("Product-Service: requestProduct");
+                return 
+                repository.findByName(productReceived.getName())
+                .switchIfEmpty(
+                    Mono.error(new NotFoundException("Product with the informed name was not found."))
                 )
-                .flatMap(product -> {
-                    product.setQuantity(e.getQuantity()+product.getQuantity());
-                    return update(product);
+                .flatMap(entity -> {
+                    if(entity.getQuantity() >= productReceived.getQuantity()){
+                    long quantityLeft = entity.getQuantity() - productReceived.getQuantity();
+                    entity.setQuantity(quantityLeft);
+                    return update(entity)
+                    .flatMap(updated -> {
+                        productReceived.setPrice(updated.getPrice());
+                        return Mono.just(productReceived);
+                    });
+                }
+                return Mono.empty();
                 });
-            });
+            });      
         };
     }
 
+    
+    @Bean
+    public Function<Flux<Product>, Flux<Product>> increaseQuantity(){
+        return productsFlux -> {
 
-    // public Flux<Product> findAll(){
-    //     return repository.findAll();
+            return
+            productsFlux.flatMap(products -> {
+                Mono<Boolean> hasElements = productsFlux.hasElements();
+                Flux<Product> a = hasElements.flatMapMany(has -> has ? productsFlux : Flux.empty());
+                a = a.switchIfEmpty(Flux.empty());
+                
+                return a.flatMap(e -> {
+                    Mono<Product> productMono = repository.findByName(e.getName());
+                    return productMono.switchIfEmpty(
+                            Mono.error(new NotFoundException("Product with name \"" + e.getName() + "\" not found."))
+                        )
+                        .flatMap(product -> {
+                            product.setQuantity(e.getQuantity() + product.getQuantity());
+                            return update(product);
+                        });
+                });
+            });
+            
+            
+        };
+    }
+    
+    // @Bean
+    // public Function<List<Product>, Flux<Product>> increaseQuantity(){
+    //     return products -> {
+    //         if(products.size() == 0)
+    //             return Flux.empty();
+
+    //         return Flux.fromIterable(products)
+    //         .flatMap(e -> {
+    //             Mono<Product> productMono = repository.findByName(e.getName());
+    //             return productMono.switchIfEmpty(
+    //                 Mono.error(new NotFoundException("Product with name \"" + e.getName() +"\" not found."))
+    //             )
+    //             .flatMap(product -> {
+    //                 product.setQuantity(e.getQuantity()+product.getQuantity());
+    //                 return update(product);
+    //             });
+    //         });
+    //     };
     // }
-
-    // public Mono<Product> findById(String id){
+    
+    // public Flux<Product> findAll(){
+        //     return repository.findAll();
+        // }
+        
+        // public Mono<Product> findById(String id){
     //     return productCache.get("product:"+id)
     //         .switchIfEmpty(
-    //             repository.findById(id)
-    //             .doOnNext(e -> System.out.println("FindById: vou salvar no cache..."))
-    //             .flatMap(c -> productCache.fastPut("product:"+c.getId(), c)
+        //             repository.findById(id)
+        //             .doOnNext(e -> System.out.println("FindById: vou salvar no cache..."))
+        //             .flatMap(c -> productCache.fastPut("product:"+c.getId(), c)
     //                                         .thenReturn(c))
     //         );
 
