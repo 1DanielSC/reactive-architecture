@@ -4,11 +4,14 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.util.MimeTypeUtils;
 
 import com.reactive.productback.exception.NotFoundException;
 import com.reactive.productback.model.Product;
+import com.reactive.productback.model.dtos.OrderConfirmationDTO;
 import com.reactive.productback.repository.ProductRepository;
 
 import reactor.core.publisher.Flux;
@@ -19,6 +22,9 @@ public class ProductService {
     
     @Autowired
     private ProductRepository repository;
+
+    @Autowired
+    private StreamBridge bridge;
 
     @Bean
     public Supplier<Flux<Product>> findAll(){
@@ -73,27 +79,45 @@ public class ProductService {
     @Bean
     public Function<Mono<Product>, Mono<Product>> requestProduct(){
         return productMono -> {
-            return
-            productMono.flatMap(
-                productReceived -> {
+
+            return productMono.flatMap(
+            productReceived -> {
+                OrderConfirmationDTO confirmation = new OrderConfirmationDTO();
+                confirmation.setProduct(productReceived);
 
                 System.out.println("Product-Service: requestProduct");
-                return 
-                repository.findByName(productReceived.getName())
+                System.out.println("Nome: " + productReceived.getName());
+                System.out.println("Qtd: " + productReceived.getQuantity());
+                 
+                return repository.findByName(productReceived.getName())
                 .switchIfEmpty(
-                    Mono.error(new NotFoundException("Product with the informed name was not found."))
+                    Mono.error(new NotFoundException("The product \"" + productReceived.getName() +"\" was not found."))
                 )
                 .flatMap(entity -> {
+                    System.out.println("estou aqui 1...");
                     if(entity.getQuantity() >= productReceived.getQuantity()){
-                    long quantityLeft = entity.getQuantity() - productReceived.getQuantity();
-                    entity.setQuantity(quantityLeft);
-                    return update(entity)
-                    .flatMap(updated -> {
-                        productReceived.setPrice(updated.getPrice());
-                        return Mono.just(productReceived);
-                    });
-                }
-                return Mono.empty();
+                        long quantityLeft = entity.getQuantity() - productReceived.getQuantity();
+                        entity.setQuantity(quantityLeft);
+                        
+                        confirmation.setProductOK(true);
+                        System.out.println("Produto está disponível!");
+                        return update(entity)
+                        .flatMap(updated -> {
+                            System.out.println("Enviando confirmação...");
+                            bridge.send("confirm-order-input", Mono.just(confirmation), MimeTypeUtils.APPLICATION_JSON);
+                            productReceived.setPrice(updated.getPrice());
+                            return Mono.just(productReceived);
+                        });
+                    }
+                    else{
+                        confirmation.setReason("Não há quantidade suficiente deste produto.");
+                        confirmation.setProductOK(false);
+                    }
+                    
+                    System.out.println("Vou enviar...");
+                    bridge.send("confirm-order-input", confirmation, MimeTypeUtils.APPLICATION_JSON);
+
+                    return Mono.empty();
                 });
             });      
         };

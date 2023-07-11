@@ -1,6 +1,7 @@
 package com.reactive.salesback.service;
 
 import java.time.LocalDateTime;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -8,15 +9,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.messaging.Message;
-import org.springframework.messaging.support.MessageBuilder;
+
 import org.springframework.util.MimeTypeUtils;
 
-import com.reactive.salesback.exception.InvalidDataException;
 import com.reactive.salesback.exception.NotFoundException;
 
 import com.reactive.salesback.model.Item;
 import com.reactive.salesback.model.Order;
+import com.reactive.salesback.model.dtos.OrderConfirmationDTO;
 import com.reactive.salesback.model.dtos.ProductDTO;
 import com.reactive.salesback.model.dtos.RequestItemDTO;
 import com.reactive.salesback.model.enums.EnumStatusOrder;
@@ -58,12 +58,10 @@ public class OrderService {
     public Function<Mono<String>, Mono<Order>> findById(){
         //return id -> id.flatMap(repository::findById)
         return id -> {
-            System.out.println("oi");
-            return id
-            .doOnNext(a -> System.out.println("ID: " + a))
-            .flatMap(repository::findById);
+            return id.flatMap(repository::findById);
         };
     }
+
 
     @Bean
     //asynchronous communication through RabbitMQ/Kafka to Product Service
@@ -78,20 +76,63 @@ public class OrderService {
         };
     }
 
+    private Mono<Order> findOrderById(String id){
+        return repository.findById(id);
+    }
+
+    //Resposta da solicitação de produto
+    /*
+     * Se a resposta tiver OK, então a adiciono à ordem de compra.
+     * Caso contrário, apenas ignoro. 
+     */
+    @Bean
+    public Consumer<Mono<OrderConfirmationDTO>> confirmRequest(){
+        return dto -> {
+            dto.flatMap(request -> {
+                System.out.println("confirmRequest: cheguei aqui");
+
+                if(!request.isProductOK()){
+                    System.err.println("Product not avaiable.");
+                    return dto;
+                }
+
+                System.out.println("confirmRequest: produto disponivel! Vou adicionar a sua sacola.");
+                findOrderById(request.getIdOrder())
+                .flatMap(order -> {
+
+                    ProductDTO productDTO = request.getProduct();
+
+                    Item item = new Item();
+                    item.setName(productDTO.getName());
+                    item.setPrice(productDTO.getPrice());
+                    item.setQuantity(productDTO.getQuantity());
+              
+                    Item itemFromStream = order.getItems()
+                    .stream()
+                    .filter(productItem -> productItem.getName().equals(item.getName()))
+                    .findFirst()
+                    .orElse(new Item(item.getName(),item.getPrice()));
+    
+                    if(itemFromStream.getQuantity() == 0)
+                        order.getItems().add(item); //TODO: Bad practice.
+
+                    itemFromStream.setQuantity(itemFromStream.getQuantity()+item.getQuantity());
+                    Double priceItem = item.getPrice()*item.getQuantity();
+                    order.setTotalPrice(order.getTotalPrice()+priceItem);
+                    return repository.save(order);
+                });
+                return dto;
+            }).subscribe();
+        };
+    }
+
+
     @Bean
     public Function<Mono<RequestItemDTO>, Mono<Order>> addItemToOrder(){
         return dtoMono -> {
             return 
             dtoMono.flatMap(dto -> {
-                
-                if(dto == null)
-                    System.out.println("DTO eh null");
-                else{
-                    System.out.println("ID: " + dto.getId());
-                    System.out.println("Nome: " + dto.getItem().getName());
-                    System.out.println("Quantity: " + dto.getItem().getQuantity());
-                    System.out.println("Price: " + dto.getItem().getPrice());
-                }
+
                 return 
                 repository.findById(dto.getId())
                 .switchIfEmpty(
@@ -101,35 +142,13 @@ public class OrderService {
                     ProductDTO requestBody = new ProductDTO();
                     requestBody.setName(dto.getItem().getName());
                     requestBody.setQuantity(dto.getItem().getQuantity());
-    
-                    bridge.send("requestProduct-in-0", requestBody, MimeTypeUtils.APPLICATION_JSON);
-                    
-                    return requestProduct().apply(requestBody)
-                    .switchIfEmpty(
-                        Mono.error(new InvalidDataException("Nao foi possivel obter o product."))
-                    )
-                    .flatMap(product -> {
-                        if(product == null)
-                            System.out.println("Product recebido eh null");
-                        else{
-                            System.out.println("Price recebido: " + product.getPrice());
-                        }
-    
-                        Item item = dto.getItem();
-                        item.setPrice(product.getPrice());                 
-                        Item itemFromStream = order.getItems()
-                        .stream()
-                        .filter(productItem -> productItem.getName().equals(item.getName()))
-                        .findFirst()
-                        .orElse(new Item(item.getName(),item.getPrice()));
-    
-                        if(itemFromStream.getQuantity() == 0)
-                            order.getItems().add(item); //TODO: Bad practice.
-                        itemFromStream.setQuantity(itemFromStream.getQuantity()+item.getQuantity());
-                        Double priceItem = item.getPrice()*item.getQuantity();
-                        order.setTotalPrice(order.getTotalPrice()+priceItem);
-                        return repository.save(order);
-                    });
+
+                    //Vou enviar solicitação para requisitar o produto
+                    bridge.send("entradadados", requestBody, MimeTypeUtils.APPLICATION_JSON);
+
+                    //Novo código, so para retornar ao flatmap
+                    return Mono.just(order);
+
                 });
             });
         };
@@ -236,6 +255,7 @@ public class OrderService {
     //         return repository.save(e);
     //     });
     // }
+
     // private Mono<Order> refuseOrder(Mono<Order> order){
     //     return order
     //     .switchIfEmpty(Mono.error(new NotFoundException("Order not found.")))
