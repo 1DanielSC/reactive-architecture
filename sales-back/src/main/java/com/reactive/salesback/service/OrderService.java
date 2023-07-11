@@ -63,18 +63,18 @@ public class OrderService {
     }
 
 
-    @Bean
-    //asynchronous communication through RabbitMQ/Kafka to Product Service
-    /*
-     * Problema: Esta funcao nao esta enviado msg assincrona ao Product.
-     * "requestProduct().apply(requestBody)" ta retornando o proprio produto aplicado...
-     */
-    public Function<ProductDTO, Mono<ProductDTO>> requestProduct(){
-        return product -> {
-            System.out.println("Sales-Service: requestProduct");
-            return Mono.just(product);
-        };
-    }
+    // @Bean
+    // //asynchronous communication through RabbitMQ/Kafka to Product Service
+    // /*
+    //  * Problema: Esta funcao nao esta enviado msg assincrona ao Product.
+    //  * "requestProduct().apply(requestBody)" ta retornando o proprio produto aplicado...
+    //  */
+    // public Function<ProductDTO, Mono<ProductDTO>> requestProduct(){
+    //     return product -> {
+    //         System.out.println("Sales-Service: requestProduct");
+    //         return Mono.just(product);
+    //     };
+    // }
 
     private Mono<Order> findOrderById(String id){
         return repository.findById(id);
