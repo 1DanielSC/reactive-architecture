@@ -77,36 +77,39 @@ public class ProductService {
     }
 
     @Bean
-    public Function<Mono<Product>, Mono<Product>> requestProduct(){
+    public Function<Mono<OrderConfirmationDTO>, Mono<Product>> requestProduct(){
         return productMono -> {
 
             return productMono.flatMap(
-            productReceived -> {
+            orderConfirmation -> {
                 OrderConfirmationDTO confirmation = new OrderConfirmationDTO();
-                confirmation.setProduct(productReceived);
+                confirmation.setProduct(orderConfirmation.getProduct());
 
                 System.out.println("Product-Service: requestProduct");
-                System.out.println("Nome: " + productReceived.getName());
-                System.out.println("Qtd: " + productReceived.getQuantity());
+                System.out.println("Nome: " + orderConfirmation.getProduct().getName());
+                System.out.println("Qtd: " + orderConfirmation.getProduct().getQuantity());
                  
-                return repository.findByName(productReceived.getName())
+                return repository.findByName(orderConfirmation.getProduct().getName())
                 .switchIfEmpty(
-                    Mono.error(new NotFoundException("The product \"" + productReceived.getName() +"\" was not found."))
+                    Mono.error(new NotFoundException("The product \"" + orderConfirmation.getProduct().getName() +"\" was not found."))
                 )
                 .flatMap(entity -> {
                     System.out.println("estou aqui 1...");
-                    if(entity.getQuantity() >= productReceived.getQuantity()){
-                        long quantityLeft = entity.getQuantity() - productReceived.getQuantity();
+                    if(entity.getQuantity() >= orderConfirmation.getProduct().getQuantity()){
+                        long quantityLeft = entity.getQuantity() - orderConfirmation.getProduct().getQuantity();
                         entity.setQuantity(quantityLeft);
-                        
+
+                        System.out.println("ID order: " + orderConfirmation.getIdOrder());
+                        confirmation.setIdOrder(orderConfirmation.getIdOrder());
                         confirmation.setProductOK(true);
+
                         System.out.println("Produto está disponível!");
                         return update(entity)
                         .flatMap(updated -> {
                             System.out.println("Enviando confirmação...");
                             bridge.send("confirm-order-input", confirmation, MimeTypeUtils.APPLICATION_JSON);
-                            productReceived.setPrice(updated.getPrice());
-                            return Mono.just(productReceived);
+                            orderConfirmation.getProduct().setPrice(updated.getPrice());
+                            return Mono.just(orderConfirmation.getProduct());
                         });
                     }
                     else{

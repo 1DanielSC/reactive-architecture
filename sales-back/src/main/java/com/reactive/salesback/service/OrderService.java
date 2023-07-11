@@ -119,6 +119,9 @@ public class OrderService {
                     itemFromStream.setQuantity(itemFromStream.getQuantity()+item.getQuantity());
                     Double priceItem = item.getPrice()*item.getQuantity();
                     order.setTotalPrice(order.getTotalPrice()+priceItem);
+                    
+                    System.out.println("Valor total atualizado: " + order.getTotalPrice());
+
                     return repository.save(order);
                 });
                 return dto;
@@ -139,16 +142,20 @@ public class OrderService {
                     Mono.error(new NotFoundException("Order not found with this id."))
                 )
                 .flatMap(order -> {
+                    
                     ProductDTO requestBody = new ProductDTO();
                     requestBody.setName(dto.getItem().getName());
                     requestBody.setQuantity(dto.getItem().getQuantity());
+                    
+                    OrderConfirmationDTO body = new OrderConfirmationDTO();
+                    body.setIdOrder(dto.getId());
+                    body.setProduct(requestBody);
 
                     //Vou enviar solicitação para requisitar o produto
-                    bridge.send("entradadados", requestBody, MimeTypeUtils.APPLICATION_JSON);
+                    bridge.send("entradadados", body, MimeTypeUtils.APPLICATION_JSON);
 
                     //Novo código, so para retornar ao flatmap
                     return Mono.just(order);
-
                 });
             });
         };
