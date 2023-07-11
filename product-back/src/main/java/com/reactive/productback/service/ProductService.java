@@ -131,7 +131,6 @@ public class ProductService {
                     MessageBuilder.withPayload(confirmation).build();
 
                     bridge.send("confirm-order-input", response);
-                    //bridge.send("confirm-order-input", confirmation, MimeTypeUtils.APPLICATION_JSON);
 
                     return Mono.empty();
                 });

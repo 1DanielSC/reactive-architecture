@@ -11,7 +11,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.util.MimeTypeUtils;
 
 import com.reactive.salesback.exception.NotFoundException;
 
@@ -144,7 +143,6 @@ public class OrderService {
 
                     //Vou enviar solicitação para requisitar o produto
                     bridge.send("entradadados", message);
-                    //bridge.send("entradadados", body, MimeTypeUtils.APPLICATION_JSON);
 
                     //Novo código, so para retornar ao flatmap
                     return Mono.just(order);
