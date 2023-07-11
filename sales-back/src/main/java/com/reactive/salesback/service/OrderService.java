@@ -74,7 +74,7 @@ public class OrderService {
      * Caso contrário, apenas ignoro. 
      */
     @Bean
-    public Consumer<Mono<OrderConfirmationDTO>> confirmRequest(){
+    public Consumer<Flux<OrderConfirmationDTO>> confirmRequest(){
         return dto -> {
             dto.flatMap(request -> {
                 System.out.println("confirmRequest: cheguei aqui");
@@ -85,6 +85,7 @@ public class OrderService {
                 }
 
                 System.out.println("confirmRequest: produto disponivel! Vou adicionar a sua sacola.");
+                System.out.println("ID order: " + request.getIdOrder());
                 findOrderById(request.getIdOrder())
                 .flatMap(order -> {
 
@@ -111,7 +112,7 @@ public class OrderService {
                     System.out.println("Valor total atualizado: " + order.getTotalPrice());
 
                     return repository.save(order);
-                });
+                }).subscribe();
                 return dto;
             }).subscribe();
         };
@@ -119,7 +120,7 @@ public class OrderService {
 
 
     @Bean
-    public Function<Mono<RequestItemDTO>, Mono<Order>> addItemToOrder(){
+    public Function<Flux<RequestItemDTO>, Flux<Order>> addItemToOrder(){
         return dtoMono -> {
             return 
             dtoMono.flatMap(dto -> {

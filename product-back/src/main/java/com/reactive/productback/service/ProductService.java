@@ -79,7 +79,7 @@ public class ProductService {
     }
 
     @Bean
-    public Function<Mono<OrderConfirmationDTO>, Mono<Product>> requestProduct(){
+    public Function<Flux<OrderConfirmationDTO>, Flux<Product>> requestProduct(){
         return productMono -> {
 
             return productMono.flatMap(
@@ -106,8 +106,14 @@ public class ProductService {
                         confirmation.setProductOK(true);
 
                         System.out.println("Produto está disponível!");
+
+
                         return update(entity)
                         .flatMap(updated -> {
+
+                            orderConfirmation.getProduct().setPrice(entity.getPrice());
+
+                            confirmation.setProduct(orderConfirmation.getProduct());
                             System.out.println("Enviando confirmação...");
                             bridge.send("confirm-order-input", confirmation, MimeTypeUtils.APPLICATION_JSON);
                             orderConfirmation.getProduct().setPrice(updated.getPrice());
