@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.util.MimeTypeUtils;
 
 import com.reactive.productback.exception.NotFoundException;
@@ -118,7 +120,12 @@ public class ProductService {
                     }
                     
                     System.out.println("Vou enviar...");
-                    bridge.send("confirm-order-input", confirmation, MimeTypeUtils.APPLICATION_JSON);
+
+                    Message<OrderConfirmationDTO> response = 
+                    MessageBuilder.withPayload(confirmation).build();
+
+                    bridge.send("confirm-order-input", response);
+                    //bridge.send("confirm-order-input", confirmation, MimeTypeUtils.APPLICATION_JSON);
 
                     return Mono.empty();
                 });

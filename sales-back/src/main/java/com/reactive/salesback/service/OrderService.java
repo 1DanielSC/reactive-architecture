@@ -9,7 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.util.MimeTypeUtils;
 
 import com.reactive.salesback.exception.NotFoundException;
@@ -62,19 +63,6 @@ public class OrderService {
         };
     }
 
-
-    // @Bean
-    // //asynchronous communication through RabbitMQ/Kafka to Product Service
-    // /*
-    //  * Problema: Esta funcao nao esta enviado msg assincrona ao Product.
-    //  * "requestProduct().apply(requestBody)" ta retornando o proprio produto aplicado...
-    //  */
-    // public Function<ProductDTO, Mono<ProductDTO>> requestProduct(){
-    //     return product -> {
-    //         System.out.println("Sales-Service: requestProduct");
-    //         return Mono.just(product);
-    //     };
-    // }
 
     private Mono<Order> findOrderById(String id){
         return repository.findById(id);
@@ -151,8 +139,11 @@ public class OrderService {
                     body.setIdOrder(dto.getId());
                     body.setProduct(requestBody);
 
+                    Message<OrderConfirmationDTO> message = MessageBuilder.withPayload(body).build();
+
                     //Vou enviar solicitação para requisitar o produto
-                    bridge.send("entradadados", body, MimeTypeUtils.APPLICATION_JSON);
+                    bridge.send("entradadados", message);
+                    //bridge.send("entradadados", body, MimeTypeUtils.APPLICATION_JSON);
 
                     //Novo código, so para retornar ao flatmap
                     return Mono.just(order);
@@ -161,149 +152,4 @@ public class OrderService {
         };
     }
             
-
-    // public Flux<Order> findAll(){
-    //     return repository.findAll();
-    // }
-
-    // public Mono<Order> findById(String id){
-    //     return repository.findById(id);
-    // }
-    
-    // public Mono<Order> createOrder(){
-    //     Mono<Order> order = Mono.just(new Order());
-    //     return order
-    //     .flatMap(e -> {
-    //         e.setId(null);
-    //         e.setDate(LocalDateTime.now());
-    //         e.setStatus(EnumStatusOrder.CREATED);
-    //         return repository.save(e);
-    //     });
-    // }
-
-    // public Mono<Order> updateStatus(String id, EnumStatusOrder status){
-    //     Mono<Order> order = findById(id);
-    //     return order
-    //     .switchIfEmpty(Mono.error(new NotFoundException("Order not found with this id.")))
-    //     .flatMap(e -> {
-    //         if(status == EnumStatusOrder.APPROVED)
-    //             return placeOrder(order);
-    //         else if(status == EnumStatusOrder.CANCELED)
-    //             return cancelOrder(order);
-    //         else if(status == EnumStatusOrder.REFUSED)
-    //             return refuseOrder(order);
-    //         else
-    //             return Mono.error(new IllegalArgumentException("Invalid status."));
-    //     });
-    // }
-
-    // public Mono<Order> addItemToOrder(String orderId, Item item){
-
-    //     return repository.findById(orderId)
-    //     .switchIfEmpty(Mono.error(new NotFoundException("Order not found with this id.")))
-    //     .flatMap(orderMono -> {            
-    //         return requestProduct(item)
-    //         .switchIfEmpty(Mono.error(new InvalidDataException("Nao foi possivel obter o product.")))
-    //         .flatMap(product -> {
-    //             item.setPrice(product.getPrice());                 
-    //             Item itemFromStream = orderMono.getItems()
-    //             .stream()
-    //             .filter(productItem -> productItem.getName().equals(item.getName()))
-    //             .findFirst()
-    //             .orElse(new Item(item.getName(),item.getPrice()));
-
-
-    //             if(itemFromStream.getQuantity() == 0)
-    //                 orderMono.getItems().add(item); //TODO: Bad practice.
-    //             itemFromStream.setQuantity(itemFromStream.getQuantity()+item.getQuantity());
-    //             Double priceItem = item.getPrice()*item.getQuantity();
-    //             orderMono.setTotalPrice(orderMono.getTotalPrice()+priceItem);
-    //             return repository.save(orderMono);  
-    //         });
-
-    //     });
-    // }
-
-    //TODO: Verificar como lidar com erros de requisição
-    // private Mono<ProductDTO> requestProduct(Item item){
-    //     return Flux.range(0, 1)
-    //     .parallel()
-    //     .runOn(Schedulers.boundedElastic())
-    //     .flatMap(e -> requestProductOnMicroservice(item))
-    //     .sequential()
-    //     .next();
-    // }
-
-    // private Mono<ProductDTO> requestProductOnMicroservice(Item item){
-    //     return productClient.requestProduct(item);
-    // }
-
-    
-
-
-    // private Mono<Order> placeOrder(Mono<Order> order){
-    //     return order
-    //     .switchIfEmpty(Mono.error(new NotFoundException("Order not found.")))
-    //     .flatMap(e ->{
-    //         e.setStatus(EnumStatusOrder.APPROVED);
-    //         return repository.save(e);
-    //     });
-    // }
-
-
-    // private Mono<Order> cancelOrder(Mono<Order> order){
-    //     return order
-    //     .switchIfEmpty(Mono.error(new NotFoundException("Order not found.")))
-    //     .filter(e -> e.getStatus() == EnumStatusOrder.CREATED)
-    //     .switchIfEmpty(Mono.error(new PreconditionFailedException("Order status is not CREATED.")))
-    //     .doOnNext(e -> updateProductQuantity(e).subscribe())
-    //     .flatMap(e ->{
-    //         e.setStatus(EnumStatusOrder.CANCELED);
-    //         return repository.save(e);
-    //     });
-    // }
-
-    // private Mono<Order> refuseOrder(Mono<Order> order){
-    //     return order
-    //     .switchIfEmpty(Mono.error(new NotFoundException("Order not found.")))
-    //     .filter(e -> e.getStatus() == EnumStatusOrder.CREATED)
-    //     .switchIfEmpty(Mono.error(new PreconditionFailedException("Order status is not CREATED.")))
-    //     .doOnNext(e -> updateProductQuantity(e).subscribe())
-    //     .flatMap(e -> {
-    //         e.setStatus(EnumStatusOrder.REFUSED);
-    //         return repository.save(e);
-    //     });
-    // }
-
-    // private Mono<Item> updateProductQuantity(Order order){
-    //     return Flux.range(0, 1)
-    //     .parallel()
-    //     .runOn(Schedulers.boundedElastic())
-    //     .flatMap(e -> updateOnProductMicroservice(order)) //TODO: Changing doOnNext to flatMap fixed the request problem
-    //     .sequential()
-    //     .next();
-    // }
-
-    // private Flux<Item> updateOnProductMicroservice(Order order){
-    //     return productClient.increaseQuantity(order.getItems());
-    // }
-    
-
-    /* NOTA SOBRE WEBCLIENT X RESTTEMPLATE */
-            
-
-        //Se eu tivesse utilizado RestTemplate, quando a linha abaixo for executada
-            //O product já terá sua quantidade atualizada no servidor Product-Back
-            //Isso acontece por causa da abordagem não-bloqueante (sincronismo)
-            
-            /*
-             * Se algum dado fosse retornado dessa requisição, o Netty seria avisado que eu fiz meu trabalho
-             *      e que algum dado estaria presente dentro do Mono retornado. Nao precisamos esperar pelo resultado da requisição.
-             *      O Netty vai responder ao cliente que realizou a requisição quando houver o dado dentro do Mono.
-             * 
-             * No futuro, algum dado estará presente dentro do Mono.
-             * 
-             *  Dessa forma, não precisamos utilizar o método block() para bloquear a execução e esperar pelo resultado do outro servidor.
-             */
-
 }
