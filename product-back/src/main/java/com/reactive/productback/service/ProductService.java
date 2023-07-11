@@ -104,7 +104,7 @@ public class ProductService {
                         return update(entity)
                         .flatMap(updated -> {
                             System.out.println("Enviando confirmação...");
-                            bridge.send("confirm-order-input", Mono.just(confirmation), MimeTypeUtils.APPLICATION_JSON);
+                            bridge.send("confirm-order-input", confirmation, MimeTypeUtils.APPLICATION_JSON);
                             productReceived.setPrice(updated.getPrice());
                             return Mono.just(productReceived);
                         });
