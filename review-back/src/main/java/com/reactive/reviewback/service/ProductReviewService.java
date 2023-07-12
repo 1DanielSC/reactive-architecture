@@ -114,7 +114,8 @@ public class ProductReviewService {
                         System.out.println("Qtd de reviews: " + productReview.getReviews().size());
                         System.out.println("Novo rating: " + productReview.getRating());
                         return Mono.just(productReview);
-                    });
+                    })
+                    .flatMap(repository::save);
                 });
             });
         };
