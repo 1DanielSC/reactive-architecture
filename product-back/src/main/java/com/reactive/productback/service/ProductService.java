@@ -41,6 +41,7 @@ public class ProductService {
             return 
             productMono.flatMap(product -> {
 
+                System.out.println("Recebi o produto: " + product.getName());
                 return repository.findByName(product.getName())
                 .switchIfEmpty(
                     Mono.just(new Product(null, product.getName(), 0L, product.getPrice()))

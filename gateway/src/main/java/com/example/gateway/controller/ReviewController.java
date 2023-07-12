@@ -10,21 +10,21 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.gateway.entity.RequestItemDTO;
+import com.example.gateway.entity.ReviewDTO;
 
 @RestController
-@RequestMapping("order")
-public class OrderController {
-
+@RequestMapping("review")
+public class ReviewController {
+    
     @Autowired
     private StreamBridge bridge;
 
     @PostMapping
-    public ResponseEntity<?> createOrder(@RequestBody(required = true) RequestItemDTO dto){
+    public ResponseEntity<?> createReview(@RequestBody(required = true) ReviewDTO dto){
 
-        Message<RequestItemDTO> message  = MessageBuilder.withPayload(dto).build();
-        System.out.println("Vou enviar um evento para requisitar um produto.");
-        bridge.send("order-addItemToOrder-input", message);
+        Message<ReviewDTO> message = MessageBuilder.withPayload(dto).build();
+        System.out.println("Vou enviar um evento para criar o review.");
+        bridge.send("review-save-input", message);
 
         return ResponseEntity.ok("Evento enviado.");
     }

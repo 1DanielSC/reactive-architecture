@@ -2,17 +2,10 @@ package com.example.gateway.entity;
 
 import java.io.Serializable;
 
-public class Item  implements Serializable {
-    private String id;
+public class ProductDTO implements Serializable{
     private String name;
     private Long quantity;
     private Double price;
-    public String getId() {
-        return id;
-    }
-    public void setId(String id) {
-        this.id = id;
-    }
     public String getName() {
         return name;
     }
@@ -31,4 +24,5 @@ public class Item  implements Serializable {
     public void setPrice(Double price) {
         this.price = price;
     }
+    
 }

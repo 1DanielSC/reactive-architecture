@@ -4,17 +4,17 @@ import java.io.Serializable;
 
 public class RequestItemDTO implements Serializable{
     private String id;
-    private Item item;
+    private ItemDTO item;
     public String getId() {
         return id;
     }
     public void setId(String id) {
         this.id = id;
     }
-    public Item getItem() {
+    public ItemDTO getItem() {
         return item;
     }
-    public void setItem(Item item) {
+    public void setItem(ItemDTO item) {
         this.item = item;
     }
 }
