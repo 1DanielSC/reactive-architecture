@@ -60,6 +60,7 @@ public class ProductReviewService {
     public Consumer<Flux<ProductReviewDTO>> registerReview(){
         return dto ->{
             dto.flatMap(productReviewDto -> {
+                System.out.println("Recebi confirmação da existência do produto...");
                 ProductReview productReview = new ProductReview();
                 productReview.setProductName(productReviewDto.getProductName());
                 productReview.setRating(productReviewDto.getRating());
@@ -91,8 +92,9 @@ public class ProductReviewService {
                     dto.setRating(review.getRating());
                     dto.setReview(review.getReview());
 
+                    System.out.println("Vou enviar mensagem para checar existencia do produto.");
                     Message<ProductReviewDTO> message = MessageBuilder.withPayload(dto).build();
-                    bridge.send("product-findByName-input", message);
+                    bridge.send("confirmProductExistance-input", message);
 
                     return Mono.empty();
                 }))
@@ -101,12 +103,16 @@ public class ProductReviewService {
                     if(productReview == null)
                         return Mono.empty();
                     
+                    System.out.println("Já existe um review cadastrado...");
                     return
                     reviewRepository.save(review)
                     .flatMap(reviewSaved ->{
                         productReview.addReview(reviewSaved);
                         productReview.setRating(productReview.getReviews().stream()
                             .mapToDouble(Review::getRating).sum() / productReview.getReviews().size());
+
+                        System.out.println("Qtd de reviews: " + productReview.getReviews().size());
+                        System.out.println("Novo rating: " + productReview.getRating());
                         return Mono.just(productReview);
                     });
                 });

@@ -1,5 +1,6 @@
 package com.reactive.productback.service;
 
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -14,6 +15,7 @@ import org.springframework.util.MimeTypeUtils;
 import com.reactive.productback.exception.NotFoundException;
 import com.reactive.productback.model.Product;
 import com.reactive.productback.model.dtos.OrderConfirmationDTO;
+import com.reactive.productback.model.dtos.ProductReviewDTO;
 import com.reactive.productback.repository.ProductRepository;
 
 import reactor.core.publisher.Flux;
@@ -59,6 +61,29 @@ public class ProductService {
             return name.flatMap(e -> {
                 return repository.findByName(e);
             });
+        };
+    }
+
+    private Mono<Product> findProductByName(String name){
+        return repository.findByName(name);
+    }
+
+    @Bean
+    public Consumer<Flux<ProductReviewDTO>> confirmProductExistance(){
+        return dto -> {
+            dto.flatMap(productReview -> {
+                System.out.println("Recebi pedido de confirmação de existência...");
+                findProductByName(productReview.getProductName())
+                .switchIfEmpty(Mono.error(new NotFoundException("Product with name \"" + productReview.getProductName() + "\" was not found.")))
+                .doOnNext(productFound -> {
+                    Message<ProductReviewDTO> message = MessageBuilder.withPayload(productReview).build();
+                    System.out.println("Enviando confirmação...");
+                    bridge.send("registerReview-input", message);
+                }).subscribe();
+
+                return Mono.empty();
+            }).subscribe(); //subscribe(), pois receberá um evento. Não há uma entidade que irá se subscrever, já que o Consumer não retorna nada. 
+            //TODO: verificar essa informação.
         };
     }
 
