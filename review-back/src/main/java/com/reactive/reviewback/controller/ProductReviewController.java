@@ -20,26 +20,26 @@ import reactor.core.publisher.Mono;
 @RequestMapping("reactive-product-review")
 public class ProductReviewController {
     
-    @Autowired
-    private ProductReviewService service;
+    // @Autowired
+    // private ProductReviewService service;
 
-    @GetMapping
-    public Flux<ProductReview> findAll(){
-        return service.findAll();
-    }
+    // @GetMapping
+    // public Flux<ProductReview> findAll(){
+    //     return service.findAll();
+    // }
 
-    @GetMapping("/{id}")
-    public Mono<ProductReview> findById(@PathVariable String id){
-        return service.findById(id);
-    }
+    // @GetMapping("/{id}")
+    // public Mono<ProductReview> findById(@PathVariable String id){
+    //     return service.findById(id);
+    // }
 
-    @PostMapping
-    public Mono<ProductReview> save(@RequestBody Review review){
-        return service.save(review);
-    }
+    // @PostMapping
+    // public Mono<ProductReview> save(@RequestBody Review review){
+    //     return service.save(review);
+    // }
 
-    @DeleteMapping
-    public Mono<Void> deleteAll(){
-        return service.deleteAll();
-    }
+    // @DeleteMapping
+    // public Mono<Void> deleteAll(){
+    //     return service.deleteAll();
+    // }
 }

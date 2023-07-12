@@ -6,7 +6,7 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.web.reactive.config.EnableWebFlux;
 
 @EnableWebFlux
-@EnableCaching
+//@EnableCaching
 @SpringBootApplication
 public class ReviewBackApplication {
 
