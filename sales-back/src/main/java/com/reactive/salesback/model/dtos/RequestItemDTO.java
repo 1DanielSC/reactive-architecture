@@ -17,6 +17,4 @@ public class RequestItemDTO {
     public void setItem(Item item) {
         this.item = item;
     }
-
-    
 }

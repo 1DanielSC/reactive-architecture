@@ -12,13 +12,12 @@ services:
     environment:
       - PASSWORD=${REDIS_PASSWORD}
     restart: always
-    #volumes:
-    #  - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "-p", "7000", "ping"]
       interval: 10s
       timeout: 3s
       retries: 10
+
   # kafka:
   #   container_name: kafka
   #   image: bitnami/kafka:latest
