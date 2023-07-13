@@ -2,7 +2,6 @@ package com.example.gateway.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.function.StreamBridge;
-import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,6 +11,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.gateway.entity.ReviewDTO;
 
+import reactor.core.publisher.Mono;
+
 @RestController
 @RequestMapping("review")
 public class ReviewController {
@@ -20,12 +21,12 @@ public class ReviewController {
     private StreamBridge bridge;
 
     @PostMapping
-    public ResponseEntity<?> createReview(@RequestBody(required = true) ReviewDTO dto){
+    public Mono<String> createReview(@RequestBody(required = true) ReviewDTO dto){
 
         Message<ReviewDTO> message = MessageBuilder.withPayload(dto).build();
         System.out.println("Vou enviar um evento para criar o review.");
         bridge.send("review-save-input", message);
 
-        return ResponseEntity.ok("Evento enviado.");
+        return Mono.just("Evento enviado.");
     }
 }

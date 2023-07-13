@@ -2,7 +2,6 @@ package com.example.gateway.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.function.StreamBridge;
-import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,6 +11,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.gateway.entity.RequestItemDTO;
 
+import reactor.core.publisher.Mono;
+
 @RestController
 @RequestMapping("order")
 public class OrderController {
@@ -20,12 +21,12 @@ public class OrderController {
     private StreamBridge bridge;
 
     @PostMapping
-    public ResponseEntity<?> createOrder(@RequestBody(required = true) RequestItemDTO dto){
+    public Mono<String> createOrder(@RequestBody(required = true) RequestItemDTO dto){
 
         Message<RequestItemDTO> message  = MessageBuilder.withPayload(dto).build();
         System.out.println("Vou enviar um evento para requisitar um produto.");
         bridge.send("order-addItemToOrder-input", message);
 
-        return ResponseEntity.ok("Evento enviado.");
+        return Mono.just("Evento enviado.");
     }
 }
