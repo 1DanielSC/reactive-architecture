@@ -6,6 +6,173 @@
 	},
 	"item": [
 		{
+			"name": "Spring Actuator",
+			"item": [
+				{
+					"name": "Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:9020/actuator/health",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9020",
+							"path": [
+								"actuator",
+								"health"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Actuator",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:9020/actuator",
+							"host": [
+								"localhost"
+							],
+							"port": "9020",
+							"path": [
+								"actuator"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Bulkhead - ProductService",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:9020/actuator/bulkheadevents/bulk_productservice",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9020",
+							"path": [
+								"actuator",
+								"bulkheadevents",
+								"bulk_productservice"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Bulkhead - Events",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:9020/actuator/bulkheadevents",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9020",
+							"path": [
+								"actuator",
+								"bulkheadevents"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Circuit Breakers",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:9020/actuator/circuitbreakers",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9020",
+							"path": [
+								"actuator",
+								"circuitbreakers"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Circuit Breaker - Events",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:9020/actuator/circuitbreakerevents/productservice",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9020",
+							"path": [
+								"actuator",
+								"circuitbreakerevents",
+								"productservice"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Retry - ProductService",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:9020/actuator/retryevents/retry_productservice",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9020",
+							"path": [
+								"actuator",
+								"retryevents",
+								"retry_productservice"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Rate Limiter - ProductService",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:9020/actuator/ratelimiterevents/rate_productservice",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9020",
+							"path": [
+								"actuator",
+								"ratelimiterevents",
+								"rate_productservice"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "Create Order",
 			"request": {
 				"method": "POST",
@@ -20,11 +187,11 @@
 					}
 				},
 				"url": {
-					"raw": "localhost:9020/order",
+					"raw": "localhost:8090/order",
 					"host": [
 						"localhost"
 					],
-					"port": "9020",
+					"port": "8090",
 					"path": [
 						"order"
 					]
@@ -68,11 +235,11 @@
 					}
 				},
 				"url": {
-					"raw": "localhost:9020/order/1/item",
+					"raw": "localhost:8090/order/1/item",
 					"host": [
 						"localhost"
 					],
-					"port": "9020",
+					"port": "8090",
 					"path": [
 						"order",
 						"1",
@@ -114,44 +281,6 @@
 					"path": [
 						"order",
 						"1"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Health",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "http://localhost:8085/actuator/health",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8085",
-					"path": [
-						"actuator",
-						"health"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Actuator",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "localhost:8085/actuator",
-					"host": [
-						"localhost"
-					],
-					"port": "8085",
-					"path": [
-						"actuator"
 					]
 				}
 			},

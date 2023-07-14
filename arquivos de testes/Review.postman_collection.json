@@ -6,6 +6,173 @@
 	},
 	"item": [
 		{
+			"name": "Spring Actuator",
+			"item": [
+				{
+					"name": "Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8054/actuator/health",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8054",
+							"path": [
+								"actuator",
+								"health"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Actuator",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8054/actuator",
+							"host": [
+								"localhost"
+							],
+							"port": "8054",
+							"path": [
+								"actuator"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Bulkhead - ProductService",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8054/actuator/bulkheadevents/bulk_productservice",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8054",
+							"path": [
+								"actuator",
+								"bulkheadevents",
+								"bulk_productservice"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Bulkhead - Events",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8054/actuator/bulkheadevents",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8054",
+							"path": [
+								"actuator",
+								"bulkheadevents"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Circuit Breakers",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8054/actuator/circuitbreakers",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8054",
+							"path": [
+								"actuator",
+								"circuitbreakers"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Circuit Breaker - Events",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8054/actuator/circuitbreakerevents/productservice",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8054",
+							"path": [
+								"actuator",
+								"circuitbreakerevents",
+								"productservice"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Retry - ProductService",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8054/actuator/retryevents/retry_productservice",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8054",
+							"path": [
+								"actuator",
+								"retryevents",
+								"retry_productservice"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Rate Limiter - ProductService",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8054/actuator/ratelimiterevents/rate_productservice",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8054",
+							"path": [
+								"actuator",
+								"ratelimiterevents",
+								"rate_productservice"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "Save",
 			"request": {
 				"method": "POST",
@@ -64,43 +231,6 @@
 					"path": [
 						"product-review",
 						"1"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Health",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "localhost:8054/actuator/health",
-					"host": [
-						"localhost"
-					],
-					"port": "8054",
-					"path": [
-						"actuator",
-						"health"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Actuator",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "localhost:8054/actuator",
-					"host": [
-						"localhost"
-					],
-					"port": "8054",
-					"path": [
-						"actuator"
 					]
 				}
 			},

@@ -369,6 +369,173 @@
 			"name": "Order",
 			"item": [
 				{
+					"name": "Spring Actuator",
+					"item": [
+						{
+							"name": "Health",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:9002/actuator/health",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "9002",
+									"path": [
+										"actuator",
+										"health"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Actuator",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "localhost:9002/actuator",
+									"host": [
+										"localhost"
+									],
+									"port": "9002",
+									"path": [
+										"actuator"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Bulkhead - ProductService",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:9002/actuator/bulkheadevents/bulk_productservice",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "9002",
+									"path": [
+										"actuator",
+										"bulkheadevents",
+										"bulk_productservice"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Bulkhead - Events",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:9002/actuator/bulkheadevents",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "9002",
+									"path": [
+										"actuator",
+										"bulkheadevents"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Circuit Breakers",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:9002/actuator/circuitbreakers",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "9002",
+									"path": [
+										"actuator",
+										"circuitbreakers"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Circuit Breaker - Events",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:9002/actuator/circuitbreakerevents/productservice",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "9002",
+									"path": [
+										"actuator",
+										"circuitbreakerevents",
+										"productservice"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Retry - ProductService",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:8054/actuator/retryevents/retry_productservice",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8054",
+									"path": [
+										"actuator",
+										"retryevents",
+										"retry_productservice"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Rate Limiter - ProductService",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:9002/actuator/ratelimiterevents/rate_productservice",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "9002",
+									"path": [
+										"actuator",
+										"ratelimiterevents",
+										"rate_productservice"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
 					"name": "Update Status",
 					"request": {
 						"method": "PATCH",
@@ -432,11 +599,11 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "localhost:8090/reactive-order",
+							"raw": "localhost:9002/reactive-order",
 							"host": [
 								"localhost"
 							],
-							"port": "8090",
+							"port": "9002",
 							"path": [
 								"reactive-order"
 							]
@@ -459,14 +626,14 @@
 							}
 						},
 						"url": {
-							"raw": "localhost:8090/reactive-order/649b158d5f928840b0b9b204/item",
+							"raw": "localhost:8090/reactive-order/64a62964813e5e14cd4cf9f5/item",
 							"host": [
 								"localhost"
 							],
 							"port": "8090",
 							"path": [
 								"reactive-order",
-								"649b158d5f928840b0b9b204",
+								"64a62964813e5e14cd4cf9f5",
 								"item"
 							]
 						}

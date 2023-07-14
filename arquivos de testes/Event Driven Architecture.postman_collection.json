@@ -1,0 +1,299 @@
+{
+	"info": {
+		"_postman_id": "2af210a5-bc1c-491b-9638-d38bba198c54",
+		"name": "Event Driven Architecture",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Sales",
+			"item": [
+				{
+					"name": "Find All",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:9002/findAll",
+							"host": [
+								"localhost"
+							],
+							"port": "9002",
+							"path": [
+								"findAll"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find By Id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:9002/findById/64ab4683ef79bd5170e8bc18",
+							"host": [
+								"localhost"
+							],
+							"port": "9002",
+							"path": [
+								"findById",
+								"64ab4683ef79bd5170e8bc18"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Order",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "localhost:9002/createOrder",
+							"host": [
+								"localhost"
+							],
+							"port": "9002",
+							"path": [
+								"createOrder"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Request Item",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n\t\"id\":\"64acaa962d68707e5dd44dda\",\r\n\t\"item\":{\r\n\t\t\"name\": \"ABC\",\r\n\t\t\"quantity\": 1\r\n\t}\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:9002/addItemToOrder",
+							"host": [
+								"localhost"
+							],
+							"port": "9002",
+							"path": [
+								"addItemToOrder"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Product",
+			"item": [
+				{
+					"name": "Save",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n\t\"name\":\"ABC\",\r\n\t\"price\":312.99,\r\n\t\"quantity\":20\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:9000/save",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"save"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find By Id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:9000/findById/64ab4719997c18565ea6e036",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"findById",
+								"64ab4719997c18565ea6e036"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find By Name",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:9000/findByName/ABCDE",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"findByName",
+								"ABCDE"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Review",
+			"item": [
+				{
+					"name": "Cadastrar",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"productName\":\"ABC\",\r\n    \"review\":\"Very good!\",\r\n    \"rating\":10.0\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:9001/save",
+							"host": [
+								"localhost"
+							],
+							"port": "9001",
+							"path": [
+								"save"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Gateway",
+			"item": [
+				{
+					"name": "Order",
+					"item": [
+						{
+							"name": "Request Item",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n\t\"id\":\"64acaa962d68707e5dd44dda\",\r\n\t\"item\":{\r\n\t\t\"name\": \"ABC\",\r\n\t\t\"quantity\": 1\r\n\t}\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8090/order",
+									"host": [
+										"localhost"
+									],
+									"port": "8090",
+									"path": [
+										"order"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Product",
+					"item": [
+						{
+							"name": "Create",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n\t\"name\":\"Intel i7 8700\",\r\n\t\"price\":500.99,\r\n\t\"quantity\":7\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8090/product",
+									"host": [
+										"localhost"
+									],
+									"port": "8090",
+									"path": [
+										"product"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Review",
+					"item": [
+						{
+							"name": "Create Review",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n\t\"productName\": \"Intel i7 8700\",\r\n\t\"rating\":10.0,\r\n\t\"review\": \"Very good!\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8090/review",
+									"host": [
+										"localhost"
+									],
+									"port": "8090",
+									"path": [
+										"review"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		}
+	]
+}
